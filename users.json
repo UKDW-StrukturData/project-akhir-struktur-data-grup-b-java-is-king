@@ -1,3 +1,28 @@
 {
-    "users": []
+    "users": [
+        {
+            "username": "fsfsdf",
+            "email": "dan@12312.gmail.com",
+            "password": "123456",
+            "created_at": "2025-11-13T20:20:40.099230",
+            "last_login": null,
+            "is_active": true
+        },
+        {
+            "username": "ere",
+            "email": "323234@gmail.com",
+            "password": "565656",
+            "created_at": "2025-11-13T20:21:17.652606",
+            "last_login": null,
+            "is_active": true
+        },
+        {
+            "username": "dan",
+            "email": "32324@gmail.com",
+            "password": "464646",
+            "created_at": "2025-11-13T20:21:54.054718",
+            "last_login": "2025-11-13T20:38:03.714132",
+            "is_active": true
+        }
+    ]
 }
