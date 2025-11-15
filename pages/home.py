@@ -508,17 +508,17 @@ else:
         return fig_players, fig_genre, fig_trend
 
     # Header dengan tombol back to login
-    header_col1, header_col2 = st.columns([3, 1])
+    # header_col1, header_col2 = st.columns([3, 1])
     
-    with header_col1:
-        st.success(f"🎉 Welcome back, **{st.session_state.username}**!")
+    # with header_col1:
+    #     st.success(f"🎉 Welcome back, **{st.session_state.username}**!")
     
-    with header_col2:
-        if st.button("🔙 Back to Login", use_container_width=True):
-            st.session_state.logged_in = False
-            st.session_state.username = ""
-            st.success("Returning to login page...")
-            st.switch_page("main.py")
+    # with header_col2:
+    #     if st.button("🔙 Back to Login", use_container_width=True):
+    #         st.session_state.logged_in = False
+    #         st.session_state.username = ""
+    #         st.success("Returning to login page...")
+    #         st.switch_page("main.py")
     
     # Tab untuk berbagai fitur
     tab1, tab2, tab3, tab4 = st.tabs(["🎯 Our Games", "🔥 Steam Charts", "📊 Analytics", "👤 Profile"])
@@ -615,9 +615,9 @@ else:
                         change_color = "green" if "+" in game['Change'] else "red"
                         st.markdown(f"<span style='color: {change_color}'>{game['Change']}</span>", 
                                   unsafe_allow_html=True)
-                    with gcol4:
-                        if st.button("🎮 Play", key=f"play_{i}"):
-                            st.success(f"Launching {game['Game']}...")
+                    # with gcol4:
+                    #     if st.button("🎮 Play", key=f"play_{i}"):
+                    #         st.success(f"Launching {game['Game']}...")
                     
                     st.markdown("---")
             
