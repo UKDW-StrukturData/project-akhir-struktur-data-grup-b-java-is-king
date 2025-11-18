@@ -221,7 +221,7 @@ def login_page():
         
         with login_col2:
             if st.button("📝 Sign Up", use_container_width=True):
-                st.switch_page("pages/signup.py")
+                st.switch_page("pages/signin.py")
 
 # Check if user is logged in
 if not st.session_state.logged_in:
