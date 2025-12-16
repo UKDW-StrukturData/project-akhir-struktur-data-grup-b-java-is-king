@@ -1,0 +1,114 @@
+{
+  "103.189.249.8": {
+    "first_tested": "2025-12-09 08:06:45",
+    "last_tested": "2025-12-09 08:06:45",
+    "test_count": 1,
+    "status_history": [
+      {
+        "time": "2025-12-09 08:06:45",
+        "status": "timeout"
+      }
+    ],
+    "total_games_fetched": 0,
+    "best_response_time": null,
+    "current_status": "timeout"
+  },
+  "203.161.58.45": {
+    "first_tested": "2025-12-09 08:06:45",
+    "last_tested": "2025-12-09 08:06:45",
+    "test_count": 1,
+    "status_history": [
+      {
+        "time": "2025-12-09 08:06:45",
+        "status": "success"
+      }
+    ],
+    "total_games_fetched": 0,
+    "best_response_time": 0.5062737464904785,
+    "current_status": "success"
+  },
+  "192.168.1.1": {
+    "first_tested": "2025-12-09 08:06:50",
+    "last_tested": "2025-12-09 08:06:50",
+    "test_count": 1,
+    "status_history": [
+      {
+        "time": "2025-12-09 08:06:50",
+        "status": "timeout"
+      }
+    ],
+    "total_games_fetched": 0,
+    "best_response_time": null,
+    "current_status": "timeout"
+  },
+  "10.0.0.1": {
+    "first_tested": "2025-12-09 08:06:55",
+    "last_tested": "2025-12-09 08:06:55",
+    "test_count": 1,
+    "status_history": [
+      {
+        "time": "2025-12-09 08:06:55",
+        "status": "timeout"
+      }
+    ],
+    "total_games_fetched": 0,
+    "best_response_time": null,
+    "current_status": "timeout"
+  },
+  "172.16.0.1": {
+    "first_tested": "2025-12-09 08:07:00",
+    "last_tested": "2025-12-09 08:07:00",
+    "test_count": 1,
+    "status_history": [
+      {
+        "time": "2025-12-09 08:07:00",
+        "status": "timeout"
+      }
+    ],
+    "total_games_fetched": 0,
+    "best_response_time": null,
+    "current_status": "timeout"
+  },
+  "103.10.124.19": {
+    "first_tested": "2025-12-09 08:07:05",
+    "last_tested": "2025-12-09 08:07:05",
+    "test_count": 1,
+    "status_history": [
+      {
+        "time": "2025-12-09 08:07:05",
+        "status": "timeout"
+      }
+    ],
+    "total_games_fetched": 0,
+    "best_response_time": null,
+    "current_status": "timeout"
+  },
+  "103.189.249.9": {
+    "first_tested": "2025-12-09 08:07:10",
+    "last_tested": "2025-12-09 08:07:10",
+    "test_count": 1,
+    "status_history": [
+      {
+        "time": "2025-12-09 08:07:10",
+        "status": "timeout"
+      }
+    ],
+    "total_games_fetched": 0,
+    "best_response_time": null,
+    "current_status": "timeout"
+  },
+  "203.161.58.46": {
+    "first_tested": "2025-12-09 08:07:15",
+    "last_tested": "2025-12-09 08:07:15",
+    "test_count": 1,
+    "status_history": [
+      {
+        "time": "2025-12-09 08:07:15",
+        "status": "timeout"
+      }
+    ],
+    "total_games_fetched": 0,
+    "best_response_time": null,
+    "current_status": "timeout"
+  }
+}
