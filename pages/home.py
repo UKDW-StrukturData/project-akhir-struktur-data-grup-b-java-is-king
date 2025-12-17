@@ -11,151 +11,21 @@ from io import BytesIO
 import json
 import random
 import numpy as np
-import openai
 
-
+# Tambahkan path untuk import utils
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 from utils.user_manager import UserManager
 
-DEEPSEEK_API_KEY = "sk-26a8e20040dc42d6870cab221aea63a8"  
-
-try:
-    if DEEPSEEK_API_KEY and DEEPSEEK_API_KEY != "sk-26a8e20040dc42d6870cab221aea63a8":
-        client = openai.OpenAI(
-            api_key=DEEPSEEK_API_KEY,
-            base_url="https://api.deepseek.com" 
-        )
-        DEEPSEEK_ENABLED = True
-    else:
-        st.warning("⚠️ DeepSeek AI tidak diaktifkan. Silakan tambahkan API key untuk menggunakan fitur AI.")
-        DEEPSEEK_ENABLED = False
-except Exception as e:
-    st.error(f"Error konfigurasi DeepSeek AI: {str(e)}")
-    DEEPSEEK_ENABLED = False
-
-
-def generate_game_description_with_ai(game_data):
-    """Generate deskripsi game menggunakan DeepSeek AI"""
-    if not DEEPSEEK_ENABLED:
-        return None
-    
-    try:
-   
-        prompt = f"""
-        Berikan deskripsi yang menarik tentang game berikut dalam 3 paragraf (maksimal 200 kata):
-        
-        Nama Game: {game_data.get('name', 'Unknown')}
-        Genre: {game_data.get('genre', 'Unknown')}
-        Rating: {game_data.get('rating', 0)}/5.0
-        Tahun Rilis: {game_data.get('year', 'Unknown')}
-        Harga: ${game_data.get('price', 0):.2f} (Diskon: {game_data.get('discount', '0%')})
-        
-        Format respons:
-        1. Paragraf 1: Pengenalan dan gameplay
-        2. Paragraf 2: Fitur utama dan keunikan
-        3. Paragraf 3: Rekomendasi untuk pemain
-        
-        Gunakan bahasa Indonesia yang menarik dan persuasif.
-        """
-        
-        response = client.chat.completions.create(
-            model="deepseek-chat",
-            messages=[
-                {"role": "system", "content": "Anda adalah ahli game yang berpengalaman. Berikan deskripsi yang menarik dan informatif tentang game-game populer. Gunakan bahasa Indonesia."},
-                {"role": "user", "content": prompt}
-            ],
-            max_tokens=500,
-            temperature=0.7,
-            stream=False
-        )
-        
-        if response and response.choices:
-            return response.choices[0].message.content
-        else:
-            return None
-            
-    except openai.APIError as e:
-        st.error(f"API Error: {str(e)}")
-        return None
-    except Exception as e:
-        st.error(f"Error generating AI description: {str(e)}")
-        return None
-
-def generate_game_recommendations_with_ai(user_preferences, available_games):
-    """Generate rekomendasi game personalisasi menggunakan AI"""
-    if not DEEPSEEK_ENABLED or len(available_games) < 5:
-        return ""
-    
-    try:
-
-        sample_games = random.sample(available_games, min(20, len(available_games)))
-        
-        prompt = f"""
-        Berikan 5 rekomendasi game personalisasi berdasarkan preferensi user:
-        
-        Preferensi User:
-        - Genre favorit: {', '.join(user_preferences.get('favorite_genres', []))}
-        - Rentang harga: ${user_preferences.get('price_range', {}).get('min', 0)} - ${user_preferences.get('price_range', {}).get('max', 100)}
-        
-        Daftar game yang tersedia (format: Nama | Genre | Rating | Harga):
-        {'\n'.join([f"{g['name']} | {g['genre']} | {g['rating']}/5.0 | ${g['price']:.2f}" for g in sample_games])}
-        
-        Berikan rekomendasi dalam format:
-        1. [Nama Game] - [Genre] - ⭐[Rating]
-           • Alasan: [Penjelasan singkat mengapa cocok]
-        2. ...
-        
-        Prioritaskan game dengan rating tinggi dan sesuai budget user.
-        """
-        
-        response = client.chat.completions.create(
-            model="deepseek-chat",
-            messages=[
-                {"role": "system", "content": "Anda adalah personal game recommender yang membantu pemain menemukan game yang sesuai dengan preferensi mereka. Gunakan bahasa Indonesia."},
-                {"role": "user", "content": prompt}
-            ],
-            max_tokens=800,
-            temperature=0.8,
-            stream=False
-        )
-        
-        if response and response.choices:
-            return response.choices[0].message.content
-        else:
-            return ""
-            
-    except Exception as e:
-        st.error(f"Error generating AI recommendations: {str(e)}")
-        return ""
-
-# Fungsi test koneksi API
-def test_deepseek_api():
-    """Test koneksi ke DeepSeek API"""
-    if not DEEPSEEK_ENABLED:
-        return False, "AI tidak aktif"
-    
-    try:
-        response = client.chat.completions.create(
-            model="deepseek-chat",
-            messages=[{"role": "user", "content": "Hello, test connection!"}],
-            max_tokens=10
-        )
-        return True, "✅ API Connected!"
-    except openai.AuthenticationError:
-        return False, "❌ API key tidak valid"
-    except openai.APIError as e:
-        return False, f"❌ API Error: {str(e)}"
-    except Exception as e:
-        return False, f"❌ Error: {str(e)}"
-
-
+# -------------------------
 # KONFIGURASI API CHEAPSHARK
+# -------------------------
 CHEAPSHARK_API_URL = "https://www.cheapshark.com/api/1.0/deals"
 CHEAPSHARK_STORES_URL = "https://www.cheapshark.com/api/1.0/stores"
 
-
+# -------------------------
 # FUNGSI UNTUK MENDAPATKAN DATA DARI API
+# -------------------------
 @st.cache_data(ttl=3600)  # Cache untuk 1 jam
 def fetch_game_deals(limit=60):
     """Mendapatkan data game deals dari CheapShark API"""
@@ -424,21 +294,6 @@ st.markdown("""
         transform: translateX(5px);
         background: #e9ecef;
     }
-    .ai-bubble {
-        background: linear-gradient(45deg, #667eea, #764ba2);
-        color: white;
-        padding: 15px;
-        border-radius: 15px;
-        margin: 10px 0;
-        border-left: 5px solid #00FF88;
-    }
-    .ai-insight {
-        background: #f0f7ff;
-        padding: 15px;
-        border-radius: 10px;
-        margin: 10px 0;
-        border: 2px solid #4A90E2;
-    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -548,14 +403,7 @@ def get_top_10_trending_games():
     
     return top_10
 
-# Session state untuk AI
-if 'ai_descriptions' not in st.session_state:
-    st.session_state.ai_descriptions = {}
-
-if 'ai_recommendations' not in st.session_state:
-    st.session_state.ai_recommendations = ""
-
-# Session state lainnya
+# Session state
 if 'wishlist' not in st.session_state:
     st.session_state.wishlist = []
 
@@ -633,13 +481,6 @@ else:
     st.title("🎮 PlayHub - Live Game Deals")
     st.success(f"🎉 Welcome back, **{st.session_state.username}**!")
     st.info(f"🔄 Connected to CheapShark API ({len(GAMES_DATA)} live deals loaded)")
-    
-    # Status AI
-    if DEEPSEEK_ENABLED:
-        st.success("🤖 DeepSeek AI Assistant: Aktif")
-    else:
-        st.warning("🤖 DeepSeek AI Assistant: Nonaktif - Tambahkan API key untuk mengaktifkan")
-    
     st.markdown('</div>', unsafe_allow_html=True)
     
     # Sidebar
@@ -654,38 +495,10 @@ else:
         else:
             st.info("Your wishlist is empty. Add games from the store!")
         
-        # Test API Connection
-        if DEEPSEEK_ENABLED:
-            st.markdown("---")
-            st.header("🔧 API Test")
-            if st.button("Test DeepSeek Connection", use_container_width=True):
-                success, message = test_deepseek_api()
-                if success:
-                    st.success(message)
-                else:
-                    st.error(message)
-        
-        # AI Recommendations Section
-        if DEEPSEEK_ENABLED and st.session_state.user_data['preferences']['favorite_genres']:
-            st.markdown("---")
-            st.header("🤖 AI Recommendations")
-            if st.button("🎯 Get Personalized Recommendations", use_container_width=True):
-                with st.spinner("🤖 AI sedang menganalisis preferensi Anda..."):
-                    recommendations = generate_game_recommendations_with_ai(
-                        st.session_state.user_data['preferences'],
-                        GAMES_DATA
-                    )
-                    st.session_state.ai_recommendations = recommendations
-                    st.rerun()
-        
         # API status
         st.markdown("---")
         st.write("**API Status:**")
         st.success("✅ Connected to CheapShark")
-        if DEEPSEEK_ENABLED:
-            st.success("✅ DeepSeek AI Active")
-        else:
-            st.warning("⚠️ DeepSeek AI Inactive")
         st.caption(f"Last updated: {datetime.now().strftime('%Y-%m-%d %H:%M')}")
         
         # Game Statistics
@@ -705,11 +518,10 @@ else:
             st.cache_data.clear()
             st.cache_resource.clear()
             st.session_state.all_game_stats = get_all_games_statistics()
-            st.session_state.ai_descriptions = {}  # Clear AI cache
             st.rerun()
 
-    # Main tabs - TAMBAH TAB AI
-    tab1, tab2, tab3, tab4 = st.tabs(["🎮 Live Deals", "📊 Analytics", "👤 Profile", "🤖 AI Assistant"])
+    # Main tabs
+    tab1, tab2, tab3 = st.tabs(["🎮 Live Deals", "📊 Analytics", "👤 Profile"])
     
     with tab1:
         # ==================== TOP 10 TRENDING GAMES ====================
@@ -1056,8 +868,9 @@ else:
             bargap=0.1
         )
         st.plotly_chart(fig_price, use_container_width=True)
+    
         
-        # Chart 3: Genre Distribution
+        # Chart 5: Genre Distribution
         st.subheader("🎮 Game Genres Distribution")
         
         genre_counts = {}
@@ -1340,155 +1153,7 @@ else:
                 time.sleep(1)
                 st.rerun()
 
-    with tab4:
-        # ==================== AI ASSISTANT TAB ====================
-        st.header("🤖 AI Game Assistant")
-        
-        if not DEEPSEEK_ENABLED:
-            st.warning("""
-            ⚠️ **DeepSeek AI tidak diaktifkan.**
-            
-            Untuk menggunakan fitur AI Assistant, Anda perlu:
-            1. Dapatkan API key dari [DeepSeek Platform](https://platform.deepseek.com/api_keys)
-            2. Ganti API key di bagian atas kode
-            3. Restart aplikasi
-            
-            Fitur yang tersedia dengan AI:
-            • Deskripsi game yang menarik
-            • Rekomendasi personalisasi
-            • Analisis game
-            """)
-        else:
-            st.success("✅ DeepSeek AI Assistant aktif dan siap membantu!")
-            
-            # Info API Key
-            with st.expander("🔑 API Key Info"):
-                st.code(f"API Key: {DEEPSEEK_API_KEY[:15]}...")
-                st.caption("Status: Active" if DEEPSEEK_ENABLED else "Status: Inactive")
-            
-            # Pilih game untuk analisis AI
-            st.subheader("🎯 Pilih Game untuk Analisis AI")
-            
-            game_names = [game['name'] for game in GAMES_DATA]
-            selected_game_name = st.selectbox(
-                "Pilih game yang ingin dianalisis:",
-                options=game_names,
-                index=0
-            )
-            
-            # Temukan game yang dipilih
-            selected_game_for_ai = None
-            for game in GAMES_DATA:
-                if game['name'] == selected_game_name:
-                    selected_game_for_ai = game
-                    break
-            
-            if selected_game_for_ai:
-                col_ai1, col_ai2 = st.columns([1, 2])
-                
-                with col_ai1:
-                    st.image(selected_game_for_ai['image'], width=200)
-                    st.write(f"**{selected_game_for_ai['name']}**")
-                    st.write(f"Genre: {selected_game_for_ai['genre']}")
-                    st.write(f"Rating: ⭐ {selected_game_for_ai['rating']}/5.0")
-                    st.write(f"Harga: ${selected_game_for_ai['price']:.2f}")
-                    if selected_game_for_ai.get('discount', '0%') != '0%':
-                        st.success(f"Diskon: {selected_game_for_ai['discount']}")
-                
-                with col_ai2:
-                    # Tombol untuk generate deskripsi AI
-                    if st.button("🤖 Generate AI Description", key="generate_ai_desc", use_container_width=True):
-                        with st.spinner("🤖 AI sedang membuat deskripsi yang menarik..."):
-                            ai_description = generate_game_description_with_ai(selected_game_for_ai)
-                            
-                            if ai_description:
-                                st.session_state.ai_descriptions[selected_game_for_ai['appid']] = ai_description
-                                st.success("✅ Deskripsi berhasil dibuat!")
-                                st.rerun()
-                            else:
-                                st.error("❌ Gagal membuat deskripsi")
-                    
-                    # Tampilkan deskripsi AI jika ada
-                    if selected_game_for_ai['appid'] in st.session_state.ai_descriptions:
-                        st.markdown("---")
-                        st.subheader("📝 AI-Generated Description")
-                        st.markdown(f'<div class="ai-bubble">{st.session_state.ai_descriptions[selected_game_for_ai["appid"]]}</div>', unsafe_allow_html=True)
-                        
-                        # Tombol untuk clear cache AI
-                        col_clear1, col_clear2 = st.columns(2)
-                        with col_clear1:
-                            if st.button("🔄 Regenerate", key="regen_ai_desc"):
-                                del st.session_state.ai_descriptions[selected_game_for_ai['appid']]
-                                st.rerun()
-                        with col_clear2:
-                            if st.button("🗑️ Clear", key="clear_ai_desc"):
-                                del st.session_state.ai_descriptions[selected_game_for_ai['appid']]
-                                st.success("Deskripsi dihapus!")
-                                time.sleep(1)
-                                st.rerun()
-                    
-                    # AI Insights
-                    st.markdown("---")
-                    st.subheader("💡 AI Insights")
-                    
-                    # Value for Money Analysis
-                    with st.expander("💰 Analisis Value for Money"):
-                        price = selected_game_for_ai['price']
-                        rating = selected_game_for_ai['rating']
-                        
-                        if price == 0:
-                            st.success("**🆓 FREE TO PLAY**")
-                            st.write("Game ini gratis! Nilai terbaik untuk uang Anda.")
-                        elif price < 10:
-                            if rating > 4.0:
-                                st.success("**💎 Excellent Value**")
-                                st.write(f"Hanya ${price:.2f} untuk game dengan rating {rating}/5.0. Deal yang sangat bagus!")
-                            elif rating > 3.0:
-                                st.info("**👍 Good Value**")
-                                st.write(f"${price:.2f} adalah harga yang wajar untuk kualitas game ini.")
-                            else:
-                                st.warning("**⚠️ Consider Carefully**")
-                                st.write(f"Rating {rating}/5.0 untuk harga ${price:.2f}. Cek review dulu sebelum membeli.")
-                        else:
-                            if rating > 4.5:
-                                st.success("**🏆 Premium Quality**")
-                                st.write(f"Game premium dengan rating {rating}/5.0. Investasi yang bagus untuk pengalaman gaming terbaik.")
-                            elif rating > 4.0:
-                                st.info("**💵 Fair Price**")
-                                st.write(f"Harga ${price:.2f} sesuai dengan kualitas game berrating {rating}/5.0.")
-                            else:
-                                st.warning("**📉 Might Wait for Sale**")
-                                st.write(f"Rating {rating}/5.0 untuk harga ${price:.2f}. Mungkin lebih baik tunggu diskon lebih besar.")
-                    
-                    # Genre Analysis
-                    with st.expander("🎮 Analisis Genre"):
-                        genre = selected_game_for_ai['genre']
-                        genre_games = [g for g in GAMES_DATA if g['genre'] == genre]
-                        avg_genre_price = sum(g['price'] for g in genre_games) / len(genre_games) if genre_games else 0
-                        avg_genre_rating = sum(g['rating'] for g in genre_games) / len(genre_games) if genre_games else 0
-                        
-                        st.write(f"**Genre:** {genre}")
-                        st.write(f"**Game dalam genre ini:** {len(genre_games)}")
-                        st.write(f"**Harga rata-rata genre:** ${avg_genre_price:.2f}")
-                        st.write(f"**Rating rata-rata genre:** {avg_genre_rating:.1f}/5.0")
-                        
-                        # Perbandingan dengan rata-rata genre
-                        if selected_game_for_ai['price'] < avg_genre_price * 0.8:
-                            st.success("**💸 Below Genre Average** - Harga lebih murah dari rata-rata genre!")
-                        elif selected_game_for_ai['rating'] > avg_genre_rating + 0.5:
-                            st.success("**⭐ Above Genre Average** - Rating lebih tinggi dari rata-rata genre!")
-                    
-                    # AI Recommendations jika ada
-                    if st.session_state.ai_recommendations:
-                        st.markdown("---")
-                        st.subheader("🎯 AI Personal Recommendations")
-                        st.markdown(f'<div class="ai-insight">{st.session_state.ai_recommendations}</div>', unsafe_allow_html=True)
-                        
-                        if st.button("🔄 Refresh Recommendations", key="refresh_ai_rec"):
-                            st.session_state.ai_recommendations = ""
-                            st.rerun()
-
-# ==================== GAME DETAILS VIEW (DENGAN AI) ====================
+# ==================== GAME DETAILS VIEW ====================
 if "selected_game" in st.session_state and st.session_state.selected_game:
     st.markdown("---")
     
@@ -1549,17 +1214,7 @@ if "selected_game" in st.session_state and st.session_state.selected_game:
                 else:
                     st.write(f"**Price:** **${price:.2f}**")
             
-            # AI Description Button
-            if DEEPSEEK_ENABLED:
-                st.markdown("---")
-                if st.button("🤖 Generate AI Description", key="ai_desc_game_detail", use_container_width=True):
-                    with st.spinner("🤖 AI sedang menganalisis game..."):
-                        ai_description = generate_game_description_with_ai(game)
-                        if ai_description:
-                            st.session_state.ai_descriptions[game['appid']] = ai_description
-                            st.rerun()
-            
-            # Actions
+            # Actions - TANPA Add to Cart
             wishlisted = is_in_wishlist(game['appid'])
             if wishlisted:
                 if st.button("❤️ Remove from Wishlist", key="remove_wish_detail", use_container_width=True):
@@ -1572,8 +1227,9 @@ if "selected_game" in st.session_state and st.session_state.selected_game:
             
             # External link ke CheapShark
             if game.get('deal_link'):
-                if st.button("🌐 View Deal on CheapShark", key="external_link", use_container_width=True):
+                if st.button("🌐 View Deal on Steam", key="external_link", use_container_width=True):
                     st.markdown(f'<meta http-equiv="refresh" content="0; url={game["deal_link"]}">', unsafe_allow_html=True)
+
         
         with col2:
             # Game info
@@ -1595,19 +1251,6 @@ if "selected_game" in st.session_state and st.session_state.selected_game:
                     st.write(f"**Steam Reviews:** {game['steam_rating_text']}")
                 if game.get('is_deal', False):
                     st.success("✅ Live Deal Available")
-            
-            # AI Description Section
-            if DEEPSEEK_ENABLED and game['appid'] in st.session_state.ai_descriptions:
-                st.markdown("---")
-                st.subheader("🤖 AI-Powered Description")
-                st.markdown(f'<div class="ai-bubble">{st.session_state.ai_descriptions[game["appid"]]}</div>', unsafe_allow_html=True)
-                
-                if st.button("🔄 Regenerate AI Description", key="regen_ai_desc"):
-                    with st.spinner("🤖 AI sedang membuat deskripsi baru..."):
-                        ai_description = generate_game_description_with_ai(game)
-                        if ai_description:
-                            st.session_state.ai_descriptions[game['appid']] = ai_description
-                            st.rerun()
         
         # Game Statistics Charts
         st.markdown("---")
@@ -1792,9 +1435,9 @@ if "selected_game" in st.session_state and st.session_state.selected_game:
         
         st.plotly_chart(fig_combined, use_container_width=True)
         
-        # AI-Powered Analytics insights
+        # Analytics insights
         st.markdown("---")
-        st.subheader("🤖 AI-Powered Analytics Insights")
+        st.subheader("📈 Analytics Insights")
         
         col_insight1, col_insight2, col_insight3 = st.columns(3)
         
@@ -1805,11 +1448,11 @@ if "selected_game" in st.session_state and st.session_state.selected_game:
             
             st.info(f"**Player Volatility:** {volatility:.1f}%")
             if volatility > 50:
-                st.caption("🔺 **AI Insight:** Tinggi - Kemungkinan ada event atau update besar baru-baru ini")
+                st.caption("🔺 High player fluctuation - possibly event-driven")
             elif volatility > 20:
-                st.caption("📊 **AI Insight:** Sedang - Komunitas aktif dengan fluktuasi normal")
+                st.caption("📊 Moderate player activity")
             else:
-                st.caption("📈 **AI Insight:** Stabil - Basis pemain yang solid dan konsisten")
+                st.caption("📈 Stable player base")
         
         with col_insight2:
             avg_rating = sum(game_stats['ratings']) / len(game_stats['ratings'])
@@ -1817,11 +1460,11 @@ if "selected_game" in st.session_state and st.session_state.selected_game:
             
             st.info(f"**Rating Stability:** {rating_std:.3f} std dev")
             if rating_std > 0.3:
-                st.caption("⚠️ **AI Insight:** Fluktuasi signifikan - Mungkin ada kontroversi atau update kontroversial")
+                st.caption("⚠️ Rating fluctuates significantly")
             elif rating_std > 0.1:
-                st.caption("📊 **AI Insight:** Perubahan moderat - Review yang beragam tapi stabil")
+                st.caption("📊 Moderate rating changes")
             else:
-                st.caption("⭐ **AI Insight:** Sangat stabil - Kualitas game yang konsisten diakui pemain")
+                st.caption("⭐ Very stable rating")
         
         with col_insight3:
             if game['price'] > 0:
@@ -1831,52 +1474,38 @@ if "selected_game" in st.session_state and st.session_state.selected_game:
                     price_range = ((max_price - min_price) / min_price) * 100
                     st.info(f"**Price Range:** {price_range:.1f}%")
                     if price_range > 30:
-                        st.caption("💸 **AI Insight:** Perubahan harga signifikan - Sering diskon besar")
+                        st.caption("💸 Significant price changes")
                     elif price_range > 10:
-                        st.caption("💰 **AI Insight:** Fluktuasi harga moderat - Harga berubah sesuai musim")
+                        st.caption("💰 Moderate price fluctuations")
                     else:
-                        st.caption("💵 **AI Insight:** Harga stabil - Jarang diskon, harga tetap")
+                        st.caption("💵 Stable pricing")
                 else:
                     st.info("**Price:** Free")
             else:
                 st.success("**Price:** 🆓 Free to Play")
         
-        # Description dengan AI
+        # Description
         st.markdown("---")
         st.subheader("📖 About This Game")
+        st.write(f"""
+        **{game['name']}** is currently available as a live deal from **{game.get('store', 'the store')}**.
         
-        # Tampilkan deskripsi AI jika ada, jika tidak tampilkan deskripsi default
-        if game['appid'] in st.session_state.ai_descriptions:
-            st.markdown(f'<div class="ai-bubble">{st.session_state.ai_descriptions[game["appid"]]}</div>', unsafe_allow_html=True)
-        else:
-            st.write(f"""
-            **{game['name']}** is currently available as a live deal from **{game.get('store', 'the store')}**.
-            
-            **💸 Deal Details:**
-            • **Current Price:** {'FREE' if game['price'] == 0 else f'${game["price"]:.2f}'}
-            • **Normal Price:** {'Free' if game.get('normal_price', 0) == 0 else f'${game.get("normal_price", 0):.2f}'}
-            • **Discount:** {game.get('discount', '0%')}
-            • **Store:** {game.get('store', 'Unknown')}
-            
-            **🎮 Game Information:**
-            • **Genre:** {game['genre']}
-            • **Release Year:** {game.get('year', 'N/A')}
-            • **Community Rating:** ⭐ {game['rating']}/5.0
-            • **Player Count:** {game.get('players', 'N/A')}
-            
-            **📊 Deal Quality:**
-            This deal has a rating of {game.get('deal_rating', 'N/A')} on CheapShark based on price history and savings.
-            The game has {game.get('steam_rating_text', 'mixed reviews')} on Steam with {game.get('steam_rating_count', '0')} reviews.
-            """)
+        **💸 Deal Details:**
+        • **Current Price:** {'FREE' if game['price'] == 0 else f'${game["price"]:.2f}'}
+        • **Normal Price:** {'Free' if game.get('normal_price', 0) == 0 else f'${game.get("normal_price", 0):.2f}'}
+        • **Discount:** {game.get('discount', '0%')}
+        • **Store:** {game.get('store', 'Unknown')}
         
-        # Tombol untuk generate AI description jika belum ada
-        if DEEPSEEK_ENABLED and game['appid'] not in st.session_state.ai_descriptions:
-            if st.button("🤖 Generate AI-Powered Description", key="final_ai_desc"):
-                with st.spinner("🤖 AI sedang membuat deskripsi yang menarik..."):
-                    ai_description = generate_game_description_with_ai(game)
-                    if ai_description:
-                        st.session_state.ai_descriptions[game['appid']] = ai_description
-                        st.rerun()
+        **🎮 Game Information:**
+        • **Genre:** {game['genre']}
+        • **Release Year:** {game.get('year', 'N/A')}
+        • **Community Rating:** ⭐ {game['rating']}/5.0
+        • **Player Count:** {game.get('players', 'N/A')}
+        
+        **📊 Deal Quality:**
+        This deal has a rating of {game.get('deal_rating', 'N/A')} on CheapShark based on price history and savings.
+        The game has {game.get('steam_rating_text', 'mixed reviews')} on Steam with {game.get('steam_rating_count', '0')} reviews.
+        """)
     
     # Back button
     st.markdown("---")
@@ -1885,4 +1514,4 @@ if "selected_game" in st.session_state and st.session_state.selected_game:
         st.rerun()
 
 st.markdown("---")
-st.caption(f"© 2024 PlayHub Game Deals | Powered by CheapShark API | {len(GAMES_DATA)} live deals loaded | Data updates hourly | {'🤖 AI Assistant: Active' if DEEPSEEK_ENABLED else '🤖 AI Assistant: Inactive'}")
+st.caption(f"© 2024 PlayHub Game Deals | Powered by CheapShark API | {len(GAMES_DATA)} live deals loaded | Data updates hourly")
