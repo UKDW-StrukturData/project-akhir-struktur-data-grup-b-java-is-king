@@ -11,7 +11,6 @@ from io import BytesIO
 import json
 import random
 import numpy as np
-import openai as genai
 
 # Tambahkan path untuk import utils
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
@@ -23,38 +22,6 @@ from utils.user_manager import UserManager
 # -------------------------
 CHEAPSHARK_API_URL = "https://www.cheapshark.com/api/1.0/deals"
 CHEAPSHARK_STORES_URL = "https://www.cheapshark.com/api/1.0/stores"
-
-# -------------------------
-# FUNGSI UNTUK MENGAMBIL API KEY DARI STREAMLIT SECRETS
-# -------------------------
-def get_gemini_api_key():
-    """Ambil API key Gemini dari Streamlit Secrets"""
-    try:
-        # Coba ambil dari secrets.toml (untuk Streamlit Cloud)
-        if 'GEMINI_API_KEY' in st.secrets:
-            api_key = st.secrets['GEMINI_API_KEY']
-            st.session_state.gemini_api_key_source = "streamlit_secrets"
-            return api_key
-        
-        # Fallback: Cek di environment variables
-        elif 'GEMINI_API_KEY' in os.environ:
-            api_key = os.environ['GEMINI_API_KEY']
-            st.session_state.gemini_api_key_source = "environment_variable"
-            return api_key
-        
-        # Fallback: Cek di session state (untuk input manual)
-        elif 'gemini_api_key' in st.session_state and st.session_state.gemini_api_key:
-            api_key = st.session_state.gemini_api_key
-            st.session_state.gemini_api_key_source = "session_state"
-            return api_key
-        
-        else:
-            st.session_state.gemini_api_key_source = "not_found"
-            return None
-            
-    except Exception as e:
-        st.error(f"Error accessing secrets: {str(e)}")
-        return None
 
 # -------------------------
 # FUNGSI UNTUK MENDAPATKAN DATA DARI API
@@ -207,140 +174,6 @@ def convert_deals_to_games_format(deals, stores):
     return games_list
 
 # -------------------------
-# FUNGSI AI UNTUK REKOMENDASI GAME
-# -------------------------
-def get_ai_game_recommendation(user_preferences, games_data, api_key):
-    """Mendapatkan rekomendasi game dari AI berdasarkan preferensi pengguna"""
-    try:
-        # Cek apakah API key valid
-        if not api_key:
-            return "❌ **API Key Gemini tidak ditemukan!** Silakan konfigurasi API key di Streamlit Cloud Secrets."
-        
-        # Konfigurasi Gemini AI
-        genai.configure(api_key=api_key)
-        model = genai.GenerativeModel('gemini-1.5-flash')
-        
-        # Format data games untuk konteks AI
-        games_info = []
-        for game in games_data[:20]:  # Ambil 20 game pertama sebagai contoh
-            games_info.append(
-                f"- {game['name']} | Genre: {game['genre']} | "
-                f"Harga: ${game['price']:.2f} | Rating: {game['rating']}/5 | "
-                f"Diskon: {game.get('discount', '0%')}"
-            )
-        
-        games_context = "\n".join(games_info)
-        
-        # Buat prompt untuk AI
-        prompt = f"""
-        Anda adalah ahli rekomendasi game. Berikan rekomendasi game berdasarkan preferensi pengguna berikut:
-        
-        **PREFERENSI PENGGUNA:**
-        - Genre favorit: {', '.join(user_preferences.get('favorite_genres', ['Semua']))}
-        - Budget: ${user_preferences.get('price_range', {}).get('min', 0)} - ${user_preferences.get('price_range', {}).get('max', 100)}
-        - Platform: {', '.join(user_preferences.get('preferred_stores', ['Steam']))}
-        
-        **DAFTAR GAME YANG TERSEDIA:**
-        {games_context}
-        
-        **INSTRUKSI:**
-        1. Berikan 3-5 rekomendasi game yang paling sesuai dengan preferensi pengguna
-        2. Untuk setiap rekomendasi, sertakan:
-           - Nama game
-           - Alasan kenapa cocok
-           - Harga dan diskon (jika ada)
-           - Rating dan genre
-        3. Gunakan format yang mudah dibaca dengan bullet points
-        4. Jika ada game dengan diskon besar, prioritaskan
-        5. Jika tidak ada game yang sesuai, berikan saran alternatif
-        
-        Berikan respons dalam bahasa Indonesia.
-        """
-        
-        # Dapatkan respons dari AI
-        response = model.generate_content(prompt)
-        return response.text
-        
-    except Exception as e:
-        return f"❌ **Error AI:** {str(e)}\n\nPastikan API key Gemini AI valid dan terkoneksi ke internet."
-
-def get_ai_game_description(game, api_key):
-    """Mendapatkan deskripsi game dari AI"""
-    try:
-        if not api_key:
-            return game.get('steam_rating_text', 'Deskripsi tidak tersedia. API Key Gemini belum dikonfigurasi.')
-        
-        genai.configure(api_key=api_key)
-        model = genai.GenerativeModel('gemini-1.5-flash')
-        
-        prompt = f"""
-        Buat deskripsi yang menarik untuk game berikut:
-        
-        **INFORMASI GAME:**
-        - Nama: {game['name']}
-        - Genre: {game['genre']}
-        - Harga: ${game['price']:.2f} (Normal: ${game.get('normal_price', game['price']):.2f})
-        - Diskon: {game.get('discount', '0%')}
-        - Rating: {game['rating']}/5.0
-        - Tahun Rilis: {game.get('year', 'Tidak diketahui')}
-        
-        **INSTRUKSI:**
-        1. Buat deskripsi menarik dalam 2-3 paragraf
-        2. Sertakan fitur utama game berdasarkan genrenya
-        3. Highlight jika ada diskon atau harga spesial
-        4. Gunakan bahasa Indonesia yang menarik
-        5. Tambahkan saran untuk tipe pemain yang cocok
-        
-        **HASIL DESKRIPSI:**
-        """
-        
-        response = model.generate_content(prompt)
-        return response.text
-        
-    except Exception as e:
-        return f"Deskripsi tidak dapat dibuat: {str(e)}"
-
-def get_ai_chat_response(user_question, games_data, api_key):
-    """Mendapatkan respons chat dari AI"""
-    try:
-        if not api_key:
-            return "❌ API Key Gemini belum dikonfigurasi. Silakan tambahkan GEMINI_API_KEY di Streamlit Cloud Secrets."
-        
-        genai.configure(api_key=api_key)
-        model = genai.GenerativeModel('gemini-1.5-flash')
-        
-        # Buat prompt kontekstual dengan data games
-        games_context = "\n".join([
-            f"- {game['name']} (${game['price']:.2f}, {game['genre']}, ⭐{game['rating']})"
-            for game in games_data[:15]
-        ])
-        
-        prompt = f"""
-        Anda adalah ahli game yang membantu pengguna. 
-        
-        **INFORMASI GAME TERSEDIA:**
-        {games_context}
-        
-        **PERTANYAAN PENGGUNA:**
-        {user_question}
-        
-        **INSTRUKSI:**
-        1. Jawab dalam bahasa Indonesia
-        2. Berikan jawaban yang informatif dan membantu
-        3. Jika relevan, sertakan rekomendasi game dari daftar di atas
-        4. Jika tidak tahu, jangan membuat informasi
-        5. Format jawaban dengan jelas
-        
-        **JAWABAN:**
-        """
-        
-        response = model.generate_content(prompt)
-        return response.text
-        
-    except Exception as e:
-        return f"❌ Error: {str(e)}"
-
-# -------------------------
 # LOAD DATA DARI API
 # -------------------------
 @st.cache_resource
@@ -364,7 +197,7 @@ def load_games_data():
 GAMES_DATA = load_games_data()
 
 st.set_page_config(
-    page_title="PlayHub - Game Deals & AI Assistant",
+    page_title="PlayHub - Game Deals",
     page_icon="🎮",
     layout="wide"
 )
@@ -426,27 +259,40 @@ st.markdown("""
         overflow: hidden;
         margin-bottom: 10px;
     }
-    .ai-response-box {
-        background: linear-gradient(45deg, #1a1a2e 0%, #16213e 100%);
-        color: white;
+    .chart-container {
+        background: white;
         padding: 20px;
         border-radius: 10px;
-        margin: 15px 0;
-        border-left: 5px solid #00adb5;
+        margin: 10px 0;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     }
-    .secret-status {
+    .profile-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 25px;
+        border-radius: 15px;
+        margin: 10px 0;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+    }
+    .stat-card {
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        margin: 10px 0;
+        border-left: 5px solid #667eea;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    .wishlist-item {
         background: #f8f9fa;
         padding: 15px;
         border-radius: 10px;
         margin: 10px 0;
-        border: 2px solid #28a745;
+        border-left: 4px solid #4A90E2;
+        transition: transform 0.2s ease;
     }
-    .secret-warning {
-        background: #fff3cd;
-        padding: 15px;
-        border-radius: 10px;
-        margin: 10px 0;
-        border: 2px solid #ffc107;
+    .wishlist-item:hover {
+        transform: translateX(5px);
+        background: #e9ecef;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -573,12 +419,6 @@ if 'selected_game' not in st.session_state:
 if 'all_game_stats' not in st.session_state:
     st.session_state.all_game_stats = get_all_games_statistics()
 
-if 'gemini_api_key_source' not in st.session_state:
-    st.session_state.gemini_api_key_source = "not_found"
-
-if 'ai_messages' not in st.session_state:
-    st.session_state.ai_messages = []
-
 # Inisialisasi data user dari session state
 if 'user_data' not in st.session_state:
     # Default user data jika belum ada
@@ -629,11 +469,6 @@ def is_in_wishlist(appid):
     return any(item['appid'] == appid for item in st.session_state.wishlist)
 
 # -------------------------
-# AMBIL API KEY DARI SECRETS
-# -------------------------
-GEMINI_API_KEY = get_gemini_api_key()
-
-# -------------------------
 # MAIN APP
 # -------------------------
 if "logged_in" not in st.session_state or not st.session_state.logged_in:
@@ -643,78 +478,13 @@ if "logged_in" not in st.session_state or not st.session_state.logged_in:
 else:
     # Header utama
     st.markdown('<div class="main-header">', unsafe_allow_html=True)
-    st.title("🎮 PlayHub - Game Deals & AI Assistant")
+    st.title("🎮 PlayHub - Live Game Deals")
     st.success(f"🎉 Welcome back, **{st.session_state.username}**!")
     st.info(f"🔄 Connected to CheapShark API ({len(GAMES_DATA)} live deals loaded)")
     st.markdown('</div>', unsafe_allow_html=True)
     
     # Sidebar
     with st.sidebar:
-        # Status API Key
-        st.header("🔑 API Key Status")
-        
-        if GEMINI_API_KEY:
-            st.markdown('<div class="secret-status">', unsafe_allow_html=True)
-            st.success("✅ Gemini API Key Loaded")
-            
-            # Tampilkan source API key
-            source = st.session_state.get('gemini_api_key_source', 'unknown')
-            source_text = {
-                'streamlit_secrets': 'Streamlit Secrets',
-                'environment_variable': 'Environment Variable',
-                'session_state': 'Session State',
-                'not_found': 'Not Found'
-            }.get(source, source)
-            
-            st.caption(f"Source: {source_text}")
-            
-            # Tampilkan informasi tentang API key
-            key_preview = GEMINI_API_KEY[:10] + "..." + GEMINI_API_KEY[-10:] if len(GEMINI_API_KEY) > 20 else "***"
-            st.code(f"Key: {key_preview}", language="text")
-            
-            st.markdown('</div>', unsafe_allow_html=True)
-            
-            # Info penggunaan AI
-            with st.expander("ℹ️ AI Features Enabled"):
-                st.markdown("""
-                - 🎮 **Personal Game Recommendations**
-                - 📝 **AI Game Descriptions**
-                - 💬 **Chat with Game Expert**
-                - 📊 **AI-Powered Analytics**
-                """)
-        
-        else:
-            st.markdown('<div class="secret-warning">', unsafe_allow_html=True)
-            st.warning("⚠️ Gemini API Key Not Found")
-            
-            st.markdown("""
-            **Untuk menggunakan AI Assistant, tambahkan di:**
-            
-            1. **Streamlit Cloud:**
-               - Buka app settings
-               - Pilih **Secrets**
-               - Tambahkan:
-               ```
-               GEMINI_API_KEY = "your-api-key-here"
-               ```
-            
-            2. **Local Development:**
-               - Buat file `.streamlit/secrets.toml`
-               - Tambahkan:
-               ```toml
-               GEMINI_API_KEY = "your-api-key-here"
-               ```
-            
-            3. **Environment Variable:**
-               ```bash
-               export GEMINI_API_KEY="your-api-key-here"
-               ```
-            """)
-            st.markdown('</div>', unsafe_allow_html=True)
-        
-        st.markdown("---")
-        
-        # Wishlist section
         st.header("❤️ Your Wishlist")
         if st.session_state.wishlist:
             st.write(f"You have **{len(st.session_state.wishlist)}** games in your wishlist")
@@ -729,12 +499,6 @@ else:
         st.markdown("---")
         st.write("**API Status:**")
         st.success("✅ Connected to CheapShark")
-        
-        if GEMINI_API_KEY:
-            st.success("✅ Gemini AI Ready")
-        else:
-            st.warning("⚠️ Gemini AI Not Configured")
-        
         st.caption(f"Last updated: {datetime.now().strftime('%Y-%m-%d %H:%M')}")
         
         # Game Statistics
@@ -754,12 +518,10 @@ else:
             st.cache_data.clear()
             st.cache_resource.clear()
             st.session_state.all_game_stats = get_all_games_statistics()
-            # Refresh API key status
-            GEMINI_API_KEY = get_gemini_api_key()
             st.rerun()
 
     # Main tabs
-    tab1, tab2, tab3, tab4 = st.tabs(["🎮 Live Deals", "📊 Analytics", "👤 Profile", "🤖 AI Assistant"])
+    tab1, tab2, tab3 = st.tabs(["🎮 Live Deals", "📊 Analytics", "👤 Profile"])
     
     with tab1:
         # ==================== TOP 10 TRENDING GAMES ====================
@@ -1360,28 +1122,12 @@ else:
                 max_price = st.slider("Maximum Price ($)", 0, 100, 
                                      value=st.session_state.user_data['preferences']['price_range']['max'])
             
-            # Tombol untuk mendapatkan rekomendasi AI
-            col_pref3, col_pref4 = st.columns(2)
-            with col_pref3:
-                if st.button("💾 Save Preferences", key="save_preferences"):
-                    st.session_state.user_data['preferences']['favorite_genres'] = selected_genres
-                    st.session_state.user_data['preferences']['price_range'] = {'min': min_price, 'max': max_price}
-                    st.success("✅ Preferences saved successfully!")
-                    time.sleep(1)
-                    st.rerun()
-            
-            with col_pref4:
-                if st.button("🤖 Get AI Recommendations", key="ai_recommendations"):
-                    if GEMINI_API_KEY:
-                        st.info("🔄 Generating AI recommendations...")
-                        preferences = st.session_state.user_data['preferences']
-                        recommendations = get_ai_game_recommendation(preferences, GAMES_DATA, GEMINI_API_KEY)
-                        st.markdown('<div class="ai-response-box">', unsafe_allow_html=True)
-                        st.markdown("### 🤖 AI Game Recommendations")
-                        st.markdown(recommendations)
-                        st.markdown('</div>', unsafe_allow_html=True)
-                    else:
-                        st.error("❌ Gemini API Key not configured!")
+            if st.button("💾 Save Preferences", key="save_preferences"):
+                st.session_state.user_data['preferences']['favorite_genres'] = selected_genres
+                st.session_state.user_data['preferences']['price_range'] = {'min': min_price, 'max': max_price}
+                st.success("✅ Preferences saved successfully!")
+                time.sleep(1)
+                st.rerun()
         
         # Account Actions
         st.markdown("---")
@@ -1405,191 +1151,6 @@ else:
                 st.session_state.user_data['activity']['total_wishlist'] = 0
                 st.success("Wishlist cleared!")
                 time.sleep(1)
-                st.rerun()
-    
-    with tab4:
-        # ==================== AI ASSISTANT PAGE ====================
-        st.header("🤖 AI Game Assistant")
-        
-        # Cek apakah API key sudah dikonfigurasi
-        if not GEMINI_API_KEY:
-            st.error("""
-            ## ⚠️ Gemini API Key Not Found in Secrets!
-            
-            Untuk menggunakan AI Assistant, Anda perlu menambahkan API key di **Streamlit Cloud Secrets**:
-            
-            1. **Di Streamlit Cloud:**
-               - Buka app settings di dashboard
-               - Scroll ke bagian **"Secrets"**
-               - Tambahkan:
-               ```toml
-               GEMINI_API_KEY = "your-actual-api-key-here"
-               ```
-            
-            2. **Untuk development lokal:**
-               - Buat file `.streamlit/secrets.toml`
-               - Tambahkan:
-               ```toml
-               GEMINI_API_KEY = "your-actual-api-key-here"
-               ```
-               - Jangan commit file ini ke GitHub!
-            
-            3. **Dapatkan API Key:**
-               - Kunjungi [Google AI Studio](https://aistudio.google.com/apikey)
-               - Login dengan Google account
-               - Buat API key baru
-            
-            Setelah API key dikonfigurasi, refresh halaman ini.
-            """)
-            
-            # Tampilkan tombol untuk refresh
-            if st.button("🔄 Refresh Page", type="primary"):
-                st.rerun()
-            
-            st.markdown("---")
-            
-            # Tampilkan struktur secrets yang diperlukan
-            with st.expander("📋 Required Secrets Structure"):
-                st.code("""
-# .streamlit/secrets.toml
-GEMINI_API_KEY = "AIzaSyD...your-api-key-here..."
-
-# Atau environment variable
-export GEMINI_API_KEY="your-api-key-here"
-                """, language="toml")
-        
-        else:
-            st.success(f"✅ **Gemini AI Ready!** API Key loaded from {st.session_state.gemini_api_key_source}")
-            
-            # Tampilkan status AI
-            col_status1, col_status2, col_status3 = st.columns(3)
-            with col_status1:
-                st.metric("🤖 AI Status", "Active")
-            with col_status2:
-                st.metric("🎮 Games Loaded", len(GAMES_DATA))
-            with col_status3:
-                st.metric("👤 User", st.session_state.username)
-            
-            st.markdown("---")
-            
-            # Pilihan fitur AI
-            st.subheader("🎯 Pilih Fitur AI:")
-            
-            ai_feature = st.radio(
-                "Apa yang ingin Anda lakukan?",
-                ["🎮 Dapatkan Rekomendasi Game", "📝 Deskripsi Game Otomatis", "💬 Chat dengan AI Game Expert"],
-                horizontal=True
-            )
-            
-            if ai_feature == "🎮 Dapatkan Rekomendasi Game":
-                st.markdown("### 🎮 AI Game Recommendations")
-                st.write("Berdasarkan preferensi Anda, AI akan merekomendasikan game yang paling cocok:")
-                
-                # Tampilkan preferensi user saat ini
-                preferences = st.session_state.user_data['preferences']
-                col_pref1, col_pref2, col_pref3 = st.columns(3)
-                with col_pref1:
-                    st.info(f"**Genre Favorit:**\n{', '.join(preferences.get('favorite_genres', ['Semua']))}")
-                with col_pref2:
-                    st.info(f"**Budget:**\n${preferences.get('price_range', {}).get('min', 0)} - ${preferences.get('price_range', {}).get('max', 100)}")
-                with col_pref3:
-                    st.info(f"**Platform:**\n{', '.join(preferences.get('preferred_stores', ['Steam']))}")
-                
-                # Tombol untuk generate rekomendasi
-                if st.button("✨ Generate AI Recommendations", type="primary", use_container_width=True):
-                    with st.spinner("🤖 AI sedang menganalisis dan merekomendasikan game..."):
-                        recommendations = get_ai_game_recommendation(preferences, GAMES_DATA, GEMINI_API_KEY)
-                        
-                        # Tampilkan rekomendasi dalam box yang menarik
-                        st.markdown('<div class="ai-response-box">', unsafe_allow_html=True)
-                        st.markdown("## 🎮 Rekomendasi Game dari AI")
-                        st.markdown("---")
-                        st.markdown(recommendations)
-                        st.markdown('</div>', unsafe_allow_html=True)
-                        
-                        # Simpan ke session state
-                        st.session_state.ai_messages.append({
-                            "type": "recommendation",
-                            "content": recommendations,
-                            "timestamp": datetime.now().strftime("%H:%M:%S")
-                        })
-                
-                # Tampilkan rekomendasi sebelumnya
-                if st.session_state.ai_messages:
-                    st.markdown("---")
-                    st.subheader("📜 Rekomendasi Sebelumnya")
-                    for msg in reversed(st.session_state.ai_messages[-3:]):  # Tampilkan 3 terakhir
-                        if msg["type"] == "recommendation":
-                            with st.expander(f"Rekomendasi - {msg['timestamp']}"):
-                                st.markdown(msg["content"])
-            
-            elif ai_feature == "📝 Deskripsi Game Otomatis":
-                st.markdown("### 📝 AI Game Description Generator")
-                st.write("Pilih game untuk mendapatkan deskripsi yang dibuat oleh AI:")
-                
-                # Pilih game dari dropdown
-                game_names = [game['name'] for game in GAMES_DATA[:20]]  # Ambil 20 pertama
-                selected_game_name = st.selectbox("Pilih Game:", game_names)
-                
-                # Cari data game yang dipilih
-                selected_game = None
-                for game in GAMES_DATA:
-                    if game['name'] == selected_game_name:
-                        selected_game = game
-                        break
-                
-                if selected_game:
-                    col_game1, col_game2 = st.columns([1, 2])
-                    with col_game1:
-                        st.image(selected_game['image'], width=200)
-                    
-                    with col_game2:
-                        st.write(f"**{selected_game['name']}**")
-                        st.write(f"Genre: {selected_game['genre']}")
-                        st.write(f"Harga: ${selected_game['price']:.2f}")
-                        if selected_game.get('discount', '0%') != '0%':
-                            st.success(f"Diskon: {selected_game['discount']}")
-                        st.write(f"Rating: ⭐ {selected_game['rating']}/5.0")
-                    
-                    # Tombol untuk generate deskripsi
-                    if st.button("✨ Generate AI Description", type="primary", use_container_width=True):
-                        with st.spinner("🤖 AI sedang membuat deskripsi yang menarik..."):
-                            description = get_ai_game_description(selected_game, GEMINI_API_KEY)
-                            
-                            # Tampilkan deskripsi
-                            st.markdown('<div class="ai-response-box">', unsafe_allow_html=True)
-                            st.markdown("## 📖 Deskripsi Game oleh AI")
-                            st.markdown("---")
-                            st.markdown(description)
-                            st.markdown('</div>', unsafe_allow_html=True)
-            
-            else:  # 💬 Chat dengan AI Game Expert
-                st.markdown("### 💬 Chat dengan AI Game Expert")
-                st.write("Tanya apapun tentang game, rekomendasi, atau tips gaming:")
-                
-                # Input chat
-                user_question = st.text_area(
-                    "Apa yang ingin Anda tanyakan tentang game?",
-                    placeholder="Contoh: 'Game RPG terbaik dengan harga dibawah $20?' atau 'Rekomendasi game multiplayer untuk 4 pemain?'",
-                    height=100
-                )
-                
-                if user_question and st.button("🤖 Tanya AI", type="primary", use_container_width=True):
-                    with st.spinner("AI sedang berpikir..."):
-                        response = get_ai_chat_response(user_question, GAMES_DATA, GEMINI_API_KEY)
-                        
-                        # Tampilkan respons
-                        st.markdown('<div class="ai-response-box">', unsafe_allow_html=True)
-                        st.markdown("### 🤖 Jawaban AI:")
-                        st.markdown("---")
-                        st.markdown(response)
-                        st.markdown('</div>', unsafe_allow_html=True)
-            
-            # Reset chat history
-            st.markdown("---")
-            if st.button("🗑️ Clear AI History", use_container_width=True):
-                st.session_state.ai_messages = []
-                st.success("AI history cleared!")
                 st.rerun()
 
 # ==================== GAME DETAILS VIEW ====================
@@ -1668,6 +1229,7 @@ if "selected_game" in st.session_state and st.session_state.selected_game:
             if game.get('deal_link'):
                 if st.button("🌐 View Deal on Steam", key="external_link", use_container_width=True):
                     st.markdown(f'<meta http-equiv="refresh" content="0; url={game["deal_link"]}">', unsafe_allow_html=True)
+
         
         with col2:
             # Game info
@@ -1922,19 +1484,9 @@ if "selected_game" in st.session_state and st.session_state.selected_game:
             else:
                 st.success("**Price:** 🆓 Free to Play")
         
-        # Description - MENAMBAHKAN AI GENERATED DESCRIPTION
+        # Description
         st.markdown("---")
         st.subheader("📖 About This Game")
-        
-        # Tombol untuk generate AI description
-        if GEMINI_API_KEY:
-            if st.button("🤖 Generate AI Description", key="generate_ai_desc"):
-                with st.spinner("AI sedang membuat deskripsi..."):
-                    ai_description = get_ai_game_description(game, GEMINI_API_KEY)
-                    st.markdown(ai_description)
-        else:
-            st.info("🔑 **Note:** Konfigurasi GEMINI_API_KEY di Streamlit Cloud Secrets untuk mendapatkan deskripsi AI!")
-        
         st.write(f"""
         **{game['name']}** is currently available as a live deal from **{game.get('store', 'the store')}**.
         
@@ -1962,4 +1514,4 @@ if "selected_game" in st.session_state and st.session_state.selected_game:
         st.rerun()
 
 st.markdown("---")
-st.caption(f"© 2024 PlayHub Game Deals | Powered by CheapShark API & Gemini AI | {len(GAMES_DATA)} live deals loaded | Data updates hourly")
+st.caption(f"© 2024 PlayHub Game Deals | Powered by CheapShark API | {len(GAMES_DATA)} live deals loaded | Data updates hourly")
