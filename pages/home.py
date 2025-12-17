@@ -11,7 +11,7 @@ from io import BytesIO
 import json
 import random
 import numpy as np
-import openai
+import openai as genai
 
 # Tambahkan path untuk import utils
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
