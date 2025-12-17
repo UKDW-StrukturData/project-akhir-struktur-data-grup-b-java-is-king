@@ -1,845 +1,3 @@
-# import streamlit as st
-# import pandas as pd
-# import plotly.express as px
-# import plotly.graph_objects as go
-# import sys
-# import os
-# import requests
-# import time
-# import base64
-# from datetime import datetime, timedelta
-# from io import BytesIO
-# import json
-# import random
-
-# # Tambahkan path untuk import utils
-# sys.path.append(os.path.dirname(os.path.dirname(__file__)))
-
-# from utils.user_manager import UserManager
-
-# st.set_page_config(
-#     page_title="PlayHub - Game Store",
-#     page_icon="🎮",
-#     layout="wide"
-# )
-
-# # Daftar game yang lebih lengkap (60 game)
-# GAMES_DATA = [
-#     # Game populer
-#     {"appid": 730, "name": "Counter-Strike 2", "image": "https://cdn.akamai.steamstatic.com/steam/apps/730/header.jpg", "price": 0, "players": "850,000", "rating": 4.8, "genre": "FPS", "year": 2023},
-#     {"appid": 570, "name": "Dota 2", "image": "https://cdn.akamai.steamstatic.com/steam/apps/570/header.jpg", "price": 0, "players": "450,000", "rating": 4.7, "genre": "MOBA", "year": 2013},
-#     {"appid": 578080, "name": "PUBG: BATTLEGROUNDS", "image": "https://cdn.akamai.steamstatic.com/steam/apps/578080/header.jpg", "price": 29.99, "players": "320,000", "rating": 4.3, "genre": "Battle Royale", "year": 2017},
-#     {"appid": 1172470, "name": "Apex Legends", "image": "https://cdn.akamai.steamstatic.com/steam/apps/1172470/header.jpg", "price": 0, "players": "280,000", "rating": 4.5, "genre": "Battle Royale", "year": 2020},
-#     {"appid": 271590, "name": "Grand Theft Auto V", "image": "https://cdn.akamai.steamstatic.com/steam/apps/271590/header.jpg", "price": 29.99, "players": "210,000", "rating": 4.7, "genre": "Action", "year": 2015},
-    
-#     # Game RPG
-#     {"appid": 1091500, "name": "Cyberpunk 2077", "image": "https://cdn.akamai.steamstatic.com/steam/apps/1091500/header.jpg", "price": 59.99, "players": "180,000", "rating": 4.2, "genre": "RPG", "year": 2020},
-#     {"appid": 1086940, "name": "Baldur's Gate 3", "image": "https://cdn.akamai.steamstatic.com/steam/apps/1086940/header.jpg", "price": 59.99, "players": "150,000", "rating": 4.9, "genre": "RPG", "year": 2023},
-#     {"appid": 1245620, "name": "ELDEN RING", "image": "https://cdn.akamai.steamstatic.com/steam/apps/1245620/header.jpg", "price": 59.99, "players": "95,000", "rating": 4.9, "genre": "RPG", "year": 2022},
-#     {"appid": 292030, "name": "The Witcher 3", "image": "https://cdn.akamai.steamstatic.com/steam/apps/292030/header.jpg", "price": 39.99, "players": "85,000", "rating": 4.9, "genre": "RPG", "year": 2015},
-#     {"appid": 489830, "name": "The Elder Scrolls V", "image": "https://cdn.akamai.steamstatic.com/steam/apps/489830/header.jpg", "price": 39.99, "players": "75,000", "rating": 4.8, "genre": "RPG", "year": 2011},
-    
-#     # Game Survival
-#     {"appid": 252490, "name": "Rust", "image": "https://cdn.akamai.steamstatic.com/steam/apps/252490/header.jpg", "price": 39.99, "players": "120,000", "rating": 4.6, "genre": "Survival", "year": 2018},
-#     {"appid": 346110, "name": "ARK: Survival Evolved", "image": "https://cdn.akamai.steamstatic.com/steam/apps/346110/header.jpg", "price": 49.99, "players": "65,000", "rating": 4.4, "genre": "Survival", "year": 2017},
-#     {"appid": 304930, "name": "Unturned", "image": "https://cdn.akamai.steamstatic.com/steam/apps/304930/header.jpg", "price": 0, "players": "45,000", "rating": 4.6, "genre": "Survival", "year": 2017},
-#     {"appid": 322330, "name": "Don't Starve Together", "image": "https://cdn.akamai.steamstatic.com/steam/apps/322330/header.jpg", "price": 14.99, "players": "35,000", "rating": 4.8, "genre": "Survival", "year": 2016},
-    
-#     # Game FPS
-#     {"appid": 440, "name": "Team Fortress 2", "image": "https://cdn.akamai.steamstatic.com/steam/apps/440/header.jpg", "price": 0, "players": "90,000", "rating": 4.8, "genre": "FPS", "year": 2007},
-#     {"appid": 359550, "name": "Rainbow Six Siege", "image": "https://cdn.akamai.steamstatic.com/steam/apps/359550/header.jpg", "price": 19.99, "players": "85,000", "rating": 4.4, "genre": "FPS", "year": 2015},
-#     {"appid": 1174180, "name": "Red Dead Redemption 2", "image": "https://cdn.akamai.steamstatic.com/steam/apps/1174180/header.jpg", "price": 59.99, "players": "95,000", "rating": 4.9, "genre": "Action", "year": 2019},
-#     {"appid": 105600, "name": "Terraria", "image": "https://cdn.akamai.steamstatic.com/steam/apps/105600/header.jpg", "price": 9.99, "players": "55,000", "rating": 4.9, "genre": "Adventure", "year": 2011},
-#     {"appid": 275850, "name": "No Man's Sky", "image": "https://cdn.akamai.steamstatic.com/steam/apps/275850/header.jpg", "price": 59.99, "players": "25,000", "rating": 4.2, "genre": "Adventure", "year": 2016},
-    
-#     # Game Indie
-#     {"appid": 413150, "name": "Stardew Valley", "image": "https://cdn.akamai.steamstatic.com/steam/apps/413150/header.jpg", "price": 14.99, "players": "45,000", "rating": 4.9, "genre": "Simulation", "year": 2016},
-#     {"appid": 367520, "name": "Hollow Knight", "image": "https://cdn.akamai.steamstatic.com/steam/apps/367520/header.jpg", "price": 14.99, "players": "35,000", "rating": 4.9, "genre": "Adventure", "year": 2017},
-#     {"appid": 504230, "name": "Celeste", "image": "https://cdn.akamai.steamstatic.com/steam/apps/504230/header.jpg", "price": 19.99, "players": "15,000", "rating": 4.9, "genre": "Platformer", "year": 2018},
-#     {"appid": 379720, "name": "Dead Cells", "image": "https://cdn.akamai.steamstatic.com/steam/apps/379720/header.jpg", "price": 24.99, "players": "25,000", "rating": 4.8, "genre": "Roguelike", "year": 2018},
-# ]
-
-# # Generate more unique games
-# def generate_unique_games(count):
-#     games = []
-#     for i in range(count):
-#         game_id = 1000000 + i
-#         game_names = [
-#             "Space Adventure", "Mystery Quest", "Dragon Slayer", "Cyber Runner",
-#             "Galaxy Defender", "Shadow Warrior", "Ocean Explorer", "Mountain Climber",
-#             "Desert Racer", "Ice Kingdom", "Fire Fighter", "Wind Rider",
-#             "Robot Revolution", "Alien Invasion", "Zombie Apocalypse", "Pirate Treasure",
-#             "Ninja Assassin", "Samurai Warrior", "Knight's Honor", "Wizard's Tower"
-#         ]
-#         genres = ["Action", "Adventure", "RPG", "Strategy", "Simulation", "Sports", "Indie", "Shooter", "Survival"]
-        
-#         games.append({
-#             "appid": game_id,
-#             "name": f"{random.choice(game_names)} {random.randint(1, 5)}",
-#             "image": f"https://via.placeholder.com/460x215/1a1a2e/ffffff?text=Game+{i+1}",
-#             "price": random.choice([0, 4.99, 9.99, 14.99, 19.99, 29.99, 39.99]),
-#             "players": f"{random.randint(1, 100):,}K",
-#             "rating": round(random.uniform(3.5, 5.0), 1),
-#             "genre": random.choice(genres),
-#             "year": random.randint(2015, 2024)
-#         })
-#     return games
-
-# # Tambahkan game unik
-# GAMES_DATA.extend(generate_unique_games(40))
-
-# # Session state untuk pagination dan wishlist
-# if 'wishlist' not in st.session_state:
-#     st.session_state.wishlist = []
-
-# if 'games_per_page' not in st.session_state:
-#     st.session_state.games_per_page = 10
-
-# if 'current_page' not in st.session_state:
-#     st.session_state.current_page = 1
-
-# if 'show_all_games' not in st.session_state:
-#     st.session_state.show_all_games = False
-
-# if 'selected_game' not in st.session_state:
-#     st.session_state.selected_game = None
-
-# # Fungsi wishlist - FIXED
-# def add_to_wishlist(appid, game_name, game_image, game_price):
-#     """Tambah game ke wishlist"""
-#     if appid not in [item['appid'] for item in st.session_state.wishlist]:
-#         st.session_state.wishlist.append({
-#             'appid': appid,
-#             'name': game_name,
-#             'image': game_image,
-#             'price': game_price,
-#             'added_date': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-#         })
-#         st.success(f"✅ Added {game_name} to wishlist!")
-#         return True
-#     else:
-#         st.warning(f"⚠️ {game_name} is already in your wishlist!")
-#         return False
-
-# def remove_from_wishlist(appid):
-#     """Hapus game dari wishlist"""
-#     for i, item in enumerate(st.session_state.wishlist):
-#         if item['appid'] == appid:
-#             removed_game = st.session_state.wishlist.pop(i)
-#             st.success(f"✅ Removed {removed_game['name']} from wishlist!")
-#             return True
-#     return False
-
-# def is_in_wishlist(appid):
-#     """Cek apakah game sudah ada di wishlist"""
-#     return any(item['appid'] == appid for item in st.session_state.wishlist)
-
-# # Fungsi untuk generate statistics
-# def generate_game_statistics(game):
-#     """Generate fake statistics untuk game"""
-#     days = 30
-#     dates = [(datetime.now() - timedelta(days=i)).strftime('%Y-%m-%d') for i in range(days)]
-    
-#     # Generate player data
-#     base_players = int(game['players'].replace('K', '000').replace(',', '').replace('.', ''))
-#     players_data = [base_players + random.randint(-10000, 10000) for _ in range(days)]
-    
-#     # Generate rating data
-#     rating_data = [game['rating'] + random.uniform(-0.2, 0.2) for _ in range(days)]
-#     rating_data = [min(max(r, 3.0), 5.0) for r in rating_data]
-    
-#     # Generate price history
-#     current_price = game['price']
-#     price_data = [current_price * random.uniform(0.8, 1.2) for _ in range(days)]
-    
-#     return {
-#         'dates': dates,
-#         'players': players_data,
-#         'ratings': rating_data,
-#         'prices': price_data
-#     }
-
-# # Check login status
-# if "logged_in" not in st.session_state or not st.session_state.logged_in:
-#     st.warning("⚠️ Please log in first!")
-#     if st.button("Go to Login"):
-#         st.switch_page("main.py")
-# else:
-#     st.title("🎮 PlayHub - Game Store")
-#     st.success(f"🎉 Welcome back, **{st.session_state.username}**!")
-    
-#     # Sidebar untuk wishlist preview
-#     with st.sidebar:
-#         st.header("❤️ Your Wishlist")
-#         if st.session_state.wishlist:
-#             st.write(f"You have **{len(st.session_state.wishlist)}** games in your wishlist")
-#             for i, item in enumerate(st.session_state.wishlist[:3]):  # Show first 3
-#                 st.write(f"• {item['name']}")
-#             if len(st.session_state.wishlist) > 3:
-#                 st.write(f"... and {len(st.session_state.wishlist) - 3} more")
-            
-#             # Quick navigation to profile
-#             if st.button("Go to Wishlist", use_container_width=True):
-#                 st.session_state.current_tab = "Profile"
-#                 st.rerun()
-#         else:
-#             st.info("Your wishlist is empty. Add games from the store!")
-
-#     # Main content tabs
-#     tab1, tab2, tab3 = st.tabs(["🎮 Games", "📊 Analytics", "👤 Profile"])
-    
-#     with tab1:
-#         # Search bar
-#         search_query = st.text_input("🔍 Search games...", placeholder="Enter game name", key="search_input")
-        
-#         # Settings
-#         col_settings1, col_settings2 = st.columns(2)
-#         with col_settings1:
-#             games_per_page = st.selectbox(
-#                 "Games per page",
-#                 [10, 20, 30, 50],
-#                 index=[10, 20, 30, 50].index(st.session_state.games_per_page),
-#                 key="games_per_page_select"
-#             )
-#             if games_per_page != st.session_state.games_per_page:
-#                 st.session_state.games_per_page = games_per_page
-#                 st.session_state.current_page = 1
-#                 st.rerun()
-        
-#         with col_settings2:
-#             sort_by = st.selectbox(
-#                 "Sort by",
-#                 ["Most Popular", "A-Z", "Z-A", "Price: Low to High", "Price: High to Low", "Rating"],
-#                 key="sort_select"
-#             )
-        
-#         # Filter dan sort games
-#         if search_query:
-#             filtered_games = [game for game in GAMES_DATA if search_query.lower() in game['name'].lower()]
-#         else:
-#             filtered_games = GAMES_DATA.copy()
-        
-#         # Sorting
-#         def players_to_numeric(players_str):
-#             try:
-#                 if 'K' in players_str:
-#                     return float(players_str.replace('K', '').replace(',', '')) * 1000
-#                 return float(players_str.replace(',', ''))
-#             except:
-#                 return 0
-        
-#         if sort_by == "A-Z":
-#             filtered_games.sort(key=lambda x: x['name'])
-#         elif sort_by == "Z-A":
-#             filtered_games.sort(key=lambda x: x['name'], reverse=True)
-#         elif sort_by == "Price: Low to High":
-#             filtered_games.sort(key=lambda x: x['price'])
-#         elif sort_by == "Price: High to Low":
-#             filtered_games.sort(key=lambda x: x['price'], reverse=True)
-#         elif sort_by == "Rating":
-#             filtered_games.sort(key=lambda x: x['rating'], reverse=True)
-#         else:  # Most Popular
-#             filtered_games.sort(key=lambda x: players_to_numeric(x['players']), reverse=True)
-        
-#         # Trending Games Section
-#         st.subheader("🔥 Trending Games")
-        
-#         cols_trending = st.columns(5)
-#         trending_games = filtered_games[:5]
-        
-#         for idx, game in enumerate(trending_games):
-#             with cols_trending[idx]:
-#                 with st.container():
-#                     st.image(game['image'], use_container_width=True)
-#                     st.write(f"**{game['name'][:15]}...**" if len(game['name']) > 15 else f"**{game['name']}**")
-                    
-#                     if game['price'] == 0:
-#                         st.success("FREE")
-#                     else:
-#                         st.write(f"💵 ${game['price']}")
-                    
-#                     col_btn1, col_btn2 = st.columns(2)
-#                     with col_btn1:
-#                         # Gunakan key yang unik dengan idx
-#                         if st.button("🔍", key=f"view_trend_{game['appid']}_{idx}", use_container_width=True):
-#                             st.session_state.selected_game = game['appid']
-#                             st.rerun()
-#                     with col_btn2:
-#                         wishlisted = is_in_wishlist(game['appid'])
-#                         if wishlisted:
-#                             if st.button("❤️", key=f"wish_trend_{game['appid']}_{idx}", use_container_width=True):
-#                                 remove_from_wishlist(game['appid'])
-#                                 time.sleep(0.5)
-#                                 st.rerun()
-#                         else:
-#                             if st.button("🤍", key=f"wish_add_trend_{game['appid']}_{idx}", use_container_width=True):
-#                                 add_to_wishlist(game['appid'], game['name'], game['image'], game['price'])
-#                                 time.sleep(0.5)
-#                                 st.rerun()
-        
-#         # All Games Section dengan pagination
-#         st.subheader(f"🎯 All Games ({len(filtered_games)} total)")
-        
-#         # Pagination
-#         total_pages = max(1, len(filtered_games) // st.session_state.games_per_page + 
-#                          (1 if len(filtered_games) % st.session_state.games_per_page > 0 else 0))
-        
-#         start_idx = (st.session_state.current_page - 1) * st.session_state.games_per_page
-#         end_idx = start_idx + st.session_state.games_per_page
-#         page_games = filtered_games[start_idx:end_idx]
-        
-#         # Display games for current page dengan index unik
-#         for idx, game in enumerate(page_games):
-#             with st.container():
-#                 col1, col2, col3, col4, col5 = st.columns([1, 3, 2, 1, 1])
-                
-#                 with col1:
-#                     st.image(game['image'], width=100)
-                
-#                 with col2:
-#                     st.write(f"**{game['name']}**")
-#                     st.caption(f"{game['genre']} • ⭐ {game['rating']} • {game['year']}")
-                
-#                 with col3:
-#                     st.write(f"👥 {game['players']}")
-#                     if game['price'] == 0:
-#                         st.success("🆓 FREE")
-#                     else:
-#                         st.write(f"💵 **${game['price']}**")
-                
-#                 with col4:
-#                     # Gunakan idx page untuk membuat key unik
-#                     if st.button("🔍", key=f"view_{game['appid']}_{start_idx + idx}", help="View Details", use_container_width=True):
-#                         st.session_state.selected_game = game['appid']
-#                         st.rerun()
-                
-#                 with col5:
-#                     wishlisted = is_in_wishlist(game['appid'])
-#                     if wishlisted:
-#                         if st.button("❤️", key=f"remove_{game['appid']}_{start_idx + idx}", help="Remove from Wishlist", use_container_width=True):
-#                             remove_from_wishlist(game['appid'])
-#                             time.sleep(0.5)
-#                             st.rerun()
-#                     else:
-#                         if st.button("🤍", key=f"add_{game['appid']}_{start_idx + idx}", help="Add to Wishlist", use_container_width=True):
-#                             add_to_wishlist(game['appid'], game['name'], game['image'], game['price'])
-#                             time.sleep(0.5)
-#                             st.rerun()
-                
-#                 st.markdown("---")
-        
-#         # Pagination controls
-#         if total_pages > 1:
-#             st.markdown("---")
-#             col_nav1, col_nav2, col_nav3, col_nav4, col_nav5 = st.columns([1, 1, 2, 1, 1])
-            
-#             with col_nav1:
-#                 if st.session_state.current_page > 1:
-#                     if st.button("◀️ First", key="first_page"):
-#                         st.session_state.current_page = 1
-#                         st.rerun()
-            
-#             with col_nav2:
-#                 if st.session_state.current_page > 1:
-#                     if st.button("◀ Prev", key="prev_page"):
-#                         st.session_state.current_page -= 1
-#                         st.rerun()
-            
-#             with col_nav3:
-#                 st.write(f"**Page {st.session_state.current_page} of {total_pages}**")
-            
-#             with col_nav4:
-#                 if st.session_state.current_page < total_pages:
-#                     if st.button("Next ▶", key="next_page"):
-#                         st.session_state.current_page += 1
-#                         st.rerun()
-            
-#             with col_nav5:
-#                 if st.session_state.current_page < total_pages:
-#                     if st.button("Last ▶️", key="last_page"):
-#                         st.session_state.current_page = total_pages
-#                         st.rerun()
-        
-#         # Show All Games button
-#         st.markdown("---")
-#         if st.button("📚 Show All Games at Once", key="show_all_button", use_container_width=True):
-#             st.session_state.show_all_games = not st.session_state.show_all_games
-#             st.rerun()
-        
-#         if st.session_state.show_all_games:
-#             st.subheader("📚 All Games List")
-#             st.info(f"Showing all {len(filtered_games)} games")
-            
-#             # Display all games in compact format
-#             for i in range(0, len(filtered_games), 3):
-#                 cols = st.columns(3)
-#                 for j in range(3):
-#                     if i + j < len(filtered_games):
-#                         game = filtered_games[i + j]
-#                         with cols[j]:
-#                             with st.container():
-#                                 st.image(game['image'], use_container_width=True)
-#                                 st.write(f"**{game['name'][:20]}...**" if len(game['name']) > 20 else f"**{game['name']}**")
-#                                 if game['price'] == 0:
-#                                     st.success("FREE")
-#                                 else:
-#                                     st.write(f"${game['price']}")
-        
-#         # Export Data
-#         st.markdown("---")
-#         st.subheader("💾 Export Data")
-        
-#         col_exp1, col_exp2 = st.columns(2)
-        
-#         with col_exp1:
-#             df = pd.DataFrame(filtered_games)
-#             csv = df[['name', 'price', 'players', 'rating', 'genre', 'year']].to_csv(index=False)
-            
-#             st.download_button(
-#                 label="📥 Download CSV",
-#                 data=csv,
-#                 file_name=f"games_{datetime.now().strftime('%Y%m%d')}.csv",
-#                 mime="text/csv",
-#                 use_container_width=True
-#             )
-        
-#         with col_exp2:
-#             json_data = df[['name', 'price', 'players', 'rating', 'genre', 'year']].to_json(orient='records', indent=2)
-#             st.download_button(
-#                 label="📥 Download JSON",
-#                 data=json_data,
-#                 file_name=f"games_{datetime.now().strftime('%Y%m%d')}.json",
-#                 mime="application/json",
-#                 use_container_width=True
-#             )
-        
-#         # Back to login
-#         st.markdown("---")
-#         if st.button("🔙 Back to Login Page", key="back_tab1", use_container_width=True):
-#             st.session_state.logged_in = False
-#             st.session_state.username = ""
-#             st.success("Returning to login page...")
-#             st.switch_page("main.py")
-    
-#     with tab2:
-#         st.header("📊 Game Analytics")
-        
-#         # Top Trending Games Chart
-#         st.subheader("🏆 Top Trending Games")
-        
-#         # Convert players to numeric for sorting
-#         def players_to_numeric_for_chart(players_str):
-#             try:
-#                 if 'K' in players_str:
-#                     return float(players_str.replace('K', '').replace(',', '')) * 1000
-#                 return float(players_str.replace(',', ''))
-#             except:
-#                 return 0
-        
-#         top_games = sorted(GAMES_DATA[:15], key=lambda x: players_to_numeric_for_chart(x['players']), reverse=True)
-#         game_names = [game['name'][:20] + ('...' if len(game['name']) > 20 else '') for game in top_games]
-#         player_counts = [players_to_numeric_for_chart(game['players']) for game in top_games]
-        
-#         fig_top = px.bar(
-#             x=game_names,
-#             y=player_counts,
-#             title='🏆 Top Trending Games by Player Count',
-#             labels={'x': 'Game', 'y': 'Players'},
-#             color=player_counts,
-#             color_continuous_scale='viridis'
-#         )
-#         fig_top.update_layout(
-#             xaxis_tickangle=-45,
-#             showlegend=False,
-#             template='plotly_dark'
-#         )
-#         st.plotly_chart(fig_top, use_container_width=True)
-        
-#         # Genre Distribution
-#         st.subheader("🎭 Genre Distribution")
-#         genre_counts = {}
-#         for game in GAMES_DATA:
-#             genre = game['genre']
-#             genre_counts[genre] = genre_counts.get(genre, 0) + 1
-        
-#         fig_genre = px.pie(
-#             values=list(genre_counts.values()),
-#             names=list(genre_counts.keys()),
-#             title='Game Genre Distribution',
-#             hole=0.3,
-#             color_discrete_sequence=px.colors.sequential.RdBu
-#         )
-#         fig_genre.update_layout(template='plotly_dark')
-#         st.plotly_chart(fig_genre, use_container_width=True)
-        
-#         # Price Distribution
-#         st.subheader("💰 Price Analysis")
-#         col_price1, col_price2 = st.columns([2, 1])
-        
-#         with col_price1:
-#             prices = [game['price'] for game in GAMES_DATA if game['price'] > 0]
-#             fig_price = px.histogram(
-#                 x=prices,
-#                 nbins=10,
-#                 title='Game Price Distribution',
-#                 labels={'x': 'Price ($)', 'y': 'Number of Games'},
-#                 color_discrete_sequence=['#636EFA']
-#             )
-#             fig_price.update_layout(template='plotly_dark')
-#             st.plotly_chart(fig_price, use_container_width=True)
-        
-#         with col_price2:
-#             free_games = len([g for g in GAMES_DATA if g['price'] == 0])
-#             paid_games = len([g for g in GAMES_DATA if g['price'] > 0])
-#             avg_price = sum(g['price'] for g in GAMES_DATA if g['price'] > 0) / paid_games if paid_games else 0
-            
-#             st.metric("Free Games", free_games)
-#             st.metric("Paid Games", paid_games)
-#             st.metric("Avg Price", f"${avg_price:.2f}")
-#             st.metric("Total Games", len(GAMES_DATA))
-        
-#         # Rating Analysis
-#         st.subheader("⭐ Rating Analysis")
-#         col_rating1, col_rating2 = st.columns([2, 1])
-        
-#         with col_rating1:
-#             ratings = [game['rating'] for game in GAMES_DATA]
-#             fig_rating = px.histogram(
-#                 x=ratings,
-#                 nbins=10,
-#                 title='Game Ratings Distribution',
-#                 labels={'x': 'Rating', 'y': 'Number of Games'},
-#                 color_discrete_sequence=['#FFA15A']
-#             )
-#             fig_rating.update_layout(template='plotly_dark')
-#             st.plotly_chart(fig_rating, use_container_width=True)
-        
-#         with col_rating2:
-#             avg_rating = sum(ratings) / len(ratings)
-#             max_rating = max(ratings)
-#             min_rating = min(ratings)
-            
-#             st.metric("Average Rating", f"{avg_rating:.2f}")
-#             st.metric("Highest Rating", f"{max_rating:.1f}")
-#             st.metric("Lowest Rating", f"{min_rating:.1f}")
-        
-#         # Export Analytics
-#         st.markdown("---")
-#         st.subheader("📋 Export Analytics Data")
-        
-#         col_exp_a1, col_exp_a2 = st.columns(2)
-        
-#         with col_exp_a1:
-#             analytics_df = pd.DataFrame(GAMES_DATA)
-#             analytics_csv = analytics_df.to_csv(index=False)
-#             st.download_button(
-#                 label="📥 Download Full Data",
-#                 data=analytics_csv,
-#                 file_name=f"analytics_{datetime.now().strftime('%Y%m%d')}.csv",
-#                 mime="text/csv",
-#                 use_container_width=True
-#             )
-        
-#         with col_exp_a2:
-#             summary = {
-#                 "Total Games": len(GAMES_DATA),
-#                 "Free Games": free_games,
-#                 "Paid Games": paid_games,
-#                 "Average Price": f"${avg_price:.2f}",
-#                 "Average Rating": f"{avg_rating:.2f}",
-#                 "Most Common Genre": max(set([g['genre'] for g in GAMES_DATA]), 
-#                                         key=[g['genre'] for g in GAMES_DATA].count)
-#             }
-#             summary_df = pd.DataFrame(list(summary.items()), columns=['Metric', 'Value'])
-#             summary_csv = summary_df.to_csv(index=False)
-#             st.download_button(
-#                 label="📥 Download Summary",
-#                 data=summary_csv,
-#                 file_name=f"summary_{datetime.now().strftime('%Y%m%d')}.csv",
-#                 mime="text/csv",
-#                 use_container_width=True
-#             )
-        
-#         # Back to login
-#         st.markdown("---")
-#         if st.button("🔙 Back to Login Page", key="back_tab2", use_container_width=True):
-#             st.session_state.logged_in = False
-#             st.session_state.username = ""
-#             st.success("Returning to login page...")
-#             st.switch_page("main.py")
-    
-#     with tab3:
-#         st.header("👤 Profile & Wishlist")
-        
-#         # User info
-#         col1, col2 = st.columns([1, 2])
-        
-#         with col1:
-#             st.image("https://via.placeholder.com/200x200/4A90E2/ffffff?text=USER", 
-#                     width=200)
-        
-#         with col2:
-#             try:
-#                 user_manager = UserManager()
-#                 user_info = user_manager.get_user_info(st.session_state.username)
-#                 if user_info:
-#                     st.write(f"**Username:** {user_info['username']}")
-#                     st.write(f"**Email:** {user_info['email']}")
-#                     st.write(f"**Joined:** {user_info['created_at'][:10]}")
-#                 else:
-#                     st.write(f"**Username:** {st.session_state.username}")
-#                     st.write("**Email:** user@example.com")
-#                     st.write("**Joined:** January 2024")
-#             except:
-#                 st.write(f"**Username:** {st.session_state.username}")
-#                 st.write("**Email:** user@example.com")
-#                 st.write("**Joined:** January 2024")
-        
-#         # Wishlist Section - FIXED
-#         st.markdown("---")
-#         st.subheader(f"❤️ Your Wishlist ({len(st.session_state.wishlist)} games)")
-        
-#         if st.session_state.wishlist:
-#             # Wishlist summary
-#             col_wish1, col_wish2, col_wish3, col_wish4 = st.columns(4)
-#             with col_wish1:
-#                 total_price = sum(item['price'] for item in st.session_state.wishlist)
-#                 st.metric("Total Value", f"${total_price:.2f}")
-#             with col_wish2:
-#                 free_games = sum(1 for item in st.session_state.wishlist if item['price'] == 0)
-#                 st.metric("Free Games", free_games)
-#             with col_wish3:
-#                 paid_games = sum(1 for item in st.session_state.wishlist if item['price'] > 0)
-#                 st.metric("Paid Games", paid_games)
-#             with col_wish4:
-#                 oldest = min(st.session_state.wishlist, key=lambda x: x['added_date'])['added_date'][:10]
-#                 st.metric("Oldest", oldest)
-            
-#             # Display wishlist items
-#             st.write("### Your Wishlisted Games")
-#             for idx, item in enumerate(st.session_state.wishlist):
-#                 with st.container():
-#                     col_item1, col_item2, col_item3, col_item4 = st.columns([1, 3, 1, 1])
-                    
-#                     with col_item1:
-#                         st.image(item['image'], width=80)
-                    
-#                     with col_item2:
-#                         st.write(f"**{item['name']}**")
-#                         st.caption(f"Added: {item['added_date']}")
-#                         if item['price'] == 0:
-#                             st.success("FREE")
-#                         else:
-#                             st.write(f"💵 ${item['price']}")
-                    
-#                     with col_item3:
-#                         # View game details button
-#                         if st.button("🔍", key=f"view_wish_{item['appid']}_{idx}", use_container_width=True):
-#                             st.session_state.selected_game = item['appid']
-#                             st.rerun()
-                    
-#                     with col_item4:
-#                         # Remove from wishlist button
-#                         if st.button("❌", key=f"remove_wish_{item['appid']}_{idx}", use_container_width=True):
-#                             remove_from_wishlist(item['appid'])
-#                             time.sleep(0.5)
-#                             st.rerun()
-                    
-#                     st.markdown("---")
-            
-#             # Export wishlist
-#             st.markdown("---")
-#             st.subheader("💾 Export Wishlist")
-            
-#             col_exp_w1, col_exp_w2 = st.columns(2)
-            
-#             with col_exp_w1:
-#                 wishlist_df = pd.DataFrame(st.session_state.wishlist)
-#                 wishlist_csv = wishlist_df.to_csv(index=False)
-#                 st.download_button(
-#                     label="📥 Download Wishlist CSV",
-#                     data=wishlist_csv,
-#                     file_name=f"wishlist_{datetime.now().strftime('%Y%m%d')}.csv",
-#                     mime="text/csv",
-#                     use_container_width=True
-#                 )
-            
-#             with col_exp_w2:
-#                 wishlist_json = wishlist_df.to_json(orient='records', indent=2)
-#                 st.download_button(
-#                     label="📥 Download Wishlist JSON",
-#                     data=wishlist_json,
-#                     file_name=f"wishlist_{datetime.now().strftime('%Y%m%d')}.json",
-#                     mime="application/json",
-#                     use_container_width=True
-#                 )
-            
-#             # Clear wishlist button
-#             if st.button("🗑️ Clear All Wishlist", type="secondary", use_container_width=True):
-#                 st.session_state.wishlist = []
-#                 st.success("Wishlist cleared!")
-#                 st.rerun()
-        
-#         else:
-#             st.info("🎯 Your wishlist is empty. Browse games and click the 🤍 button to add games to your wishlist!")
-            
-#             # Suggest some games to add
-#             st.write("### 💡 Suggested Games to Add:")
-#             suggested_games = GAMES_DATA[:3]
-#             cols_suggest = st.columns(3)
-#             for idx, game in enumerate(suggested_games):
-#                 with cols_suggest[idx]:
-#                     st.image(game['image'], use_container_width=True)
-#                     st.write(f"**{game['name']}**")
-#                     if game['price'] == 0:
-#                         st.success("FREE")
-#                     else:
-#                         st.write(f"${game['price']}")
-#                     if st.button("Add to Wishlist", key=f"suggest_{game['appid']}", use_container_width=True):
-#                         add_to_wishlist(game['appid'], game['name'], game['image'], game['price'])
-#                         st.rerun()
-        
-#         # Logout
-#         st.markdown("---")
-#         col_logout, col_back = st.columns(2)
-#         with col_logout:
-#             if st.button("🚪 Logout", type="primary", use_container_width=True):
-#                 st.session_state.logged_in = False
-#                 st.session_state.username = ""
-#                 st.success("Logged out!")
-#                 st.switch_page("main.py")
-#         with col_back:
-#             if st.button("🔙 Back to Games", use_container_width=True):
-#                 st.session_state.current_page = 1
-#                 st.rerun()
-
-# # Game details view dengan grafik
-# if "selected_game" in st.session_state and st.session_state.selected_game:
-#     st.markdown("---")
-    
-#     appid = st.session_state.selected_game
-    
-#     # Find game details
-#     game = next((g for g in GAMES_DATA if g['appid'] == appid), None)
-    
-#     if game:
-#         st.header(f"🎮 {game['name']}")
-        
-#         # Main columns
-#         col1, col2 = st.columns([1, 2])
-        
-#         with col1:
-#             st.image(game['image'], use_container_width=True)
-            
-#             # Price and actions
-#             price = game['price']
-#             if price == 0:
-#                 st.success("🆓 FREE TO PLAY")
-#             else:
-#                 st.write(f"**Price:** ${price}")
-            
-#             col_act1, col_act2 = st.columns(2)
-#             with col_act1:
-#                 if st.button("🛒 Add to Cart", key="add_cart_detail", use_container_width=True):
-#                     st.success(f"Added {game['name']} to cart!")
-#             with col_act2:
-#                 wishlisted = is_in_wishlist(game['appid'])
-#                 if wishlisted:
-#                     if st.button("❤️ Remove", key="remove_wish_detail", use_container_width=True):
-#                         remove_from_wishlist(game['appid'])
-#                         st.rerun()
-#                 else:
-#                     if st.button("🤍 Wishlist", key="add_wish_detail", use_container_width=True):
-#                         add_to_wishlist(game['appid'], game['name'], game['image'], game['price'])
-#                         st.rerun()
-        
-#         with col2:
-#             # Game info
-#             st.subheader("📋 Game Information")
-#             col_info1, col_info2 = st.columns(2)
-            
-#             with col_info1:
-#                 st.write(f"**Genre:** {game['genre']}")
-#                 st.write(f"**Release Year:** {game['year']}")
-#                 st.write(f"**Current Players:** {game['players']}")
-            
-#             with col_info2:
-#                 st.write(f"**Rating:** ⭐ {game['rating']}/5.0")
-#                 st.write(f"**Price:** ${game['price'] if game['price'] > 0 else 'Free'}")
-#                 st.write(f"**Status:** {'Online' if int(game['players'].replace('K', '000').replace(',', '')) > 1000 else 'Popular'}")
-        
-#         # Game Statistics Charts
-#         st.markdown("---")
-#         st.subheader("📈 Game Statistics & Trends")
-        
-#         # Generate game statistics
-#         game_stats = generate_game_statistics(game)
-        
-#         # Player Trend Chart
-#         st.write("### 👥 Player Activity Trend")
-#         fig_player = go.Figure()
-#         fig_player.add_trace(go.Scatter(
-#             x=game_stats['dates'][::-1],  # Reverse untuk tampilkan dari oldest ke newest
-#             y=game_stats['players'][::-1],
-#             mode='lines+markers',
-#             name='Players',
-#             line=dict(color='#00CC96', width=3),
-#             marker=dict(size=6)
-#         ))
-#         fig_player.update_layout(
-#             title='Player Trend (Last 30 Days)',
-#             xaxis_title="Date",
-#             yaxis_title="Players",
-#             hovermode='x unified',
-#             template='plotly_dark'
-#         )
-#         st.plotly_chart(fig_player, use_container_width=True)
-        
-#         # Quick Stats
-#         col_stats1, col_stats2, col_stats3, col_stats4 = st.columns(4)
-#         with col_stats1:
-#             avg_players = sum(game_stats['players']) / len(game_stats['players'])
-#             st.metric("Avg Players", f"{avg_players:,.0f}")
-#         with col_stats2:
-#             avg_rating = sum(game_stats['ratings']) / len(game_stats['ratings'])
-#             st.metric("Avg Rating", f"{avg_rating:.2f}")
-#         with col_stats3:
-#             max_players = max(game_stats['players'])
-#             st.metric("Peak Players", f"{max_players:,.0f}")
-#         with col_stats4:
-#             min_players = min(game_stats['players'])
-#             st.metric("Lowest Players", f"{min_players:,.0f}")
-        
-#         # Description
-#         st.markdown("---")
-#         st.subheader("📖 About This Game")
-#         st.write(f"""
-#         {game['name']} is a popular {game['genre'].lower()} game that was released in {game['year']}. 
-#         With an average of {game['players']} active players and a rating of {game['rating']}/5.0, 
-#         this game has established itself as one of the top titles in its genre.
-        
-#         The game features immersive gameplay, stunning graphics, and a dedicated community 
-#         of players. Whether you're looking for competitive multiplayer action or an engaging 
-#         single-player experience, {game['name']} delivers on all fronts.
-        
-#         **Key Features:**
-#         • Engaging {game['genre']} gameplay
-#         • Active player community
-#         • Regular updates and content additions
-#         • Cross-platform compatibility
-#         • Competitive ranking system
-#         """)
-    
-#     # Back button
-#     col_back1, col_back2, col_back3 = st.columns([1, 2, 1])
-#     with col_back2:
-#         if st.button("← Back to Games", key="back_to_games", use_container_width=True):
-#             del st.session_state.selected_game
-#             st.rerun()
-
-# st.markdown("---")
-# st.caption("© 2024 PlayHub Game Store | Browse amazing games with detailed analytics") 
-
 import streamlit as st
 import pandas as pd
 import plotly.express as px
@@ -853,21 +11,151 @@ from io import BytesIO
 import json
 import random
 import numpy as np
+import openai
 
-# Tambahkan path untuk import utils
+
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 from utils.user_manager import UserManager
 
-# -------------------------
+DEEPSEEK_API_KEY = "sk-26a8e20040dc42d6870cab221aea63a8"  
+
+try:
+    if DEEPSEEK_API_KEY and DEEPSEEK_API_KEY != "sk-26a8e20040dc42d6870cab221aea63a8":
+        client = openai.OpenAI(
+            api_key=DEEPSEEK_API_KEY,
+            base_url="https://api.deepseek.com" 
+        )
+        DEEPSEEK_ENABLED = True
+    else:
+        st.warning("⚠️ DeepSeek AI tidak diaktifkan. Silakan tambahkan API key untuk menggunakan fitur AI.")
+        DEEPSEEK_ENABLED = False
+except Exception as e:
+    st.error(f"Error konfigurasi DeepSeek AI: {str(e)}")
+    DEEPSEEK_ENABLED = False
+
+
+def generate_game_description_with_ai(game_data):
+    """Generate deskripsi game menggunakan DeepSeek AI"""
+    if not DEEPSEEK_ENABLED:
+        return None
+    
+    try:
+   
+        prompt = f"""
+        Berikan deskripsi yang menarik tentang game berikut dalam 3 paragraf (maksimal 200 kata):
+        
+        Nama Game: {game_data.get('name', 'Unknown')}
+        Genre: {game_data.get('genre', 'Unknown')}
+        Rating: {game_data.get('rating', 0)}/5.0
+        Tahun Rilis: {game_data.get('year', 'Unknown')}
+        Harga: ${game_data.get('price', 0):.2f} (Diskon: {game_data.get('discount', '0%')})
+        
+        Format respons:
+        1. Paragraf 1: Pengenalan dan gameplay
+        2. Paragraf 2: Fitur utama dan keunikan
+        3. Paragraf 3: Rekomendasi untuk pemain
+        
+        Gunakan bahasa Indonesia yang menarik dan persuasif.
+        """
+        
+        response = client.chat.completions.create(
+            model="deepseek-chat",
+            messages=[
+                {"role": "system", "content": "Anda adalah ahli game yang berpengalaman. Berikan deskripsi yang menarik dan informatif tentang game-game populer. Gunakan bahasa Indonesia."},
+                {"role": "user", "content": prompt}
+            ],
+            max_tokens=500,
+            temperature=0.7,
+            stream=False
+        )
+        
+        if response and response.choices:
+            return response.choices[0].message.content
+        else:
+            return None
+            
+    except openai.APIError as e:
+        st.error(f"API Error: {str(e)}")
+        return None
+    except Exception as e:
+        st.error(f"Error generating AI description: {str(e)}")
+        return None
+
+def generate_game_recommendations_with_ai(user_preferences, available_games):
+    """Generate rekomendasi game personalisasi menggunakan AI"""
+    if not DEEPSEEK_ENABLED or len(available_games) < 5:
+        return ""
+    
+    try:
+
+        sample_games = random.sample(available_games, min(20, len(available_games)))
+        
+        prompt = f"""
+        Berikan 5 rekomendasi game personalisasi berdasarkan preferensi user:
+        
+        Preferensi User:
+        - Genre favorit: {', '.join(user_preferences.get('favorite_genres', []))}
+        - Rentang harga: ${user_preferences.get('price_range', {}).get('min', 0)} - ${user_preferences.get('price_range', {}).get('max', 100)}
+        
+        Daftar game yang tersedia (format: Nama | Genre | Rating | Harga):
+        {'\n'.join([f"{g['name']} | {g['genre']} | {g['rating']}/5.0 | ${g['price']:.2f}" for g in sample_games])}
+        
+        Berikan rekomendasi dalam format:
+        1. [Nama Game] - [Genre] - ⭐[Rating]
+           • Alasan: [Penjelasan singkat mengapa cocok]
+        2. ...
+        
+        Prioritaskan game dengan rating tinggi dan sesuai budget user.
+        """
+        
+        response = client.chat.completions.create(
+            model="deepseek-chat",
+            messages=[
+                {"role": "system", "content": "Anda adalah personal game recommender yang membantu pemain menemukan game yang sesuai dengan preferensi mereka. Gunakan bahasa Indonesia."},
+                {"role": "user", "content": prompt}
+            ],
+            max_tokens=800,
+            temperature=0.8,
+            stream=False
+        )
+        
+        if response and response.choices:
+            return response.choices[0].message.content
+        else:
+            return ""
+            
+    except Exception as e:
+        st.error(f"Error generating AI recommendations: {str(e)}")
+        return ""
+
+# Fungsi test koneksi API
+def test_deepseek_api():
+    """Test koneksi ke DeepSeek API"""
+    if not DEEPSEEK_ENABLED:
+        return False, "AI tidak aktif"
+    
+    try:
+        response = client.chat.completions.create(
+            model="deepseek-chat",
+            messages=[{"role": "user", "content": "Hello, test connection!"}],
+            max_tokens=10
+        )
+        return True, "✅ API Connected!"
+    except openai.AuthenticationError:
+        return False, "❌ API key tidak valid"
+    except openai.APIError as e:
+        return False, f"❌ API Error: {str(e)}"
+    except Exception as e:
+        return False, f"❌ Error: {str(e)}"
+
+
 # KONFIGURASI API CHEAPSHARK
-# -------------------------
 CHEAPSHARK_API_URL = "https://www.cheapshark.com/api/1.0/deals"
 CHEAPSHARK_STORES_URL = "https://www.cheapshark.com/api/1.0/stores"
 
-# -------------------------
+
 # FUNGSI UNTUK MENDAPATKAN DATA DARI API
-# -------------------------
 @st.cache_data(ttl=3600)  # Cache untuk 1 jam
 def fetch_game_deals(limit=60):
     """Mendapatkan data game deals dari CheapShark API"""
@@ -1136,6 +424,21 @@ st.markdown("""
         transform: translateX(5px);
         background: #e9ecef;
     }
+    .ai-bubble {
+        background: linear-gradient(45deg, #667eea, #764ba2);
+        color: white;
+        padding: 15px;
+        border-radius: 15px;
+        margin: 10px 0;
+        border-left: 5px solid #00FF88;
+    }
+    .ai-insight {
+        background: #f0f7ff;
+        padding: 15px;
+        border-radius: 10px;
+        margin: 10px 0;
+        border: 2px solid #4A90E2;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -1245,7 +548,14 @@ def get_top_10_trending_games():
     
     return top_10
 
-# Session state
+# Session state untuk AI
+if 'ai_descriptions' not in st.session_state:
+    st.session_state.ai_descriptions = {}
+
+if 'ai_recommendations' not in st.session_state:
+    st.session_state.ai_recommendations = ""
+
+# Session state lainnya
 if 'wishlist' not in st.session_state:
     st.session_state.wishlist = []
 
@@ -1323,6 +633,13 @@ else:
     st.title("🎮 PlayHub - Live Game Deals")
     st.success(f"🎉 Welcome back, **{st.session_state.username}**!")
     st.info(f"🔄 Connected to CheapShark API ({len(GAMES_DATA)} live deals loaded)")
+    
+    # Status AI
+    if DEEPSEEK_ENABLED:
+        st.success("🤖 DeepSeek AI Assistant: Aktif")
+    else:
+        st.warning("🤖 DeepSeek AI Assistant: Nonaktif - Tambahkan API key untuk mengaktifkan")
+    
     st.markdown('</div>', unsafe_allow_html=True)
     
     # Sidebar
@@ -1337,10 +654,38 @@ else:
         else:
             st.info("Your wishlist is empty. Add games from the store!")
         
+        # Test API Connection
+        if DEEPSEEK_ENABLED:
+            st.markdown("---")
+            st.header("🔧 API Test")
+            if st.button("Test DeepSeek Connection", use_container_width=True):
+                success, message = test_deepseek_api()
+                if success:
+                    st.success(message)
+                else:
+                    st.error(message)
+        
+        # AI Recommendations Section
+        if DEEPSEEK_ENABLED and st.session_state.user_data['preferences']['favorite_genres']:
+            st.markdown("---")
+            st.header("🤖 AI Recommendations")
+            if st.button("🎯 Get Personalized Recommendations", use_container_width=True):
+                with st.spinner("🤖 AI sedang menganalisis preferensi Anda..."):
+                    recommendations = generate_game_recommendations_with_ai(
+                        st.session_state.user_data['preferences'],
+                        GAMES_DATA
+                    )
+                    st.session_state.ai_recommendations = recommendations
+                    st.rerun()
+        
         # API status
         st.markdown("---")
         st.write("**API Status:**")
         st.success("✅ Connected to CheapShark")
+        if DEEPSEEK_ENABLED:
+            st.success("✅ DeepSeek AI Active")
+        else:
+            st.warning("⚠️ DeepSeek AI Inactive")
         st.caption(f"Last updated: {datetime.now().strftime('%Y-%m-%d %H:%M')}")
         
         # Game Statistics
@@ -1360,10 +705,11 @@ else:
             st.cache_data.clear()
             st.cache_resource.clear()
             st.session_state.all_game_stats = get_all_games_statistics()
+            st.session_state.ai_descriptions = {}  # Clear AI cache
             st.rerun()
 
-    # Main tabs
-    tab1, tab2, tab3 = st.tabs(["🎮 Live Deals", "📊 Analytics", "👤 Profile"])
+    # Main tabs - TAMBAH TAB AI
+    tab1, tab2, tab3, tab4 = st.tabs(["🎮 Live Deals", "📊 Analytics", "👤 Profile", "🤖 AI Assistant"])
     
     with tab1:
         # ==================== TOP 10 TRENDING GAMES ====================
@@ -1711,39 +1057,7 @@ else:
         )
         st.plotly_chart(fig_price, use_container_width=True)
         
-        # Chart 3: Rating vs Price
-        st.subheader("⭐ Rating vs Price Analysis")
-        
-        fig_scatter = px.scatter(
-            GAMES_DATA,
-            x='price',
-            y='rating',
-            size='players_numeric',
-            color='genre',
-            hover_name='name',
-            labels={'price': 'Price ($)', 'rating': 'Rating', 'players_numeric': 'Player Count'},
-            title="Rating vs Price Correlation"
-        )
-        fig_scatter.update_layout(height=500)
-        st.plotly_chart(fig_scatter, use_container_width=True)
-        
-        # Chart 4: Store Distribution
-        st.subheader("🛒 Deals by Store")
-        
-        store_counts = {}
-        for game in GAMES_DATA:
-            store = game.get('store', 'Unknown')
-            store_counts[store] = store_counts.get(store, 0) + 1
-        
-        fig_store = px.pie(
-            values=list(store_counts.values()),
-            names=list(store_counts.keys()),
-            title="Distribution of Deals by Store"
-        )
-        fig_store.update_layout(height=400)
-        st.plotly_chart(fig_store, use_container_width=True)
-        
-        # Chart 5: Genre Distribution
+        # Chart 3: Genre Distribution
         st.subheader("🎮 Game Genres Distribution")
         
         genre_counts = {}
@@ -1789,10 +1103,8 @@ else:
             """, unsafe_allow_html=True)
         
         with col_profile2:
-            st.markdown(f"<h2 style='color: black; margin-top: 0;'>{st.session_state.user_data['full_name']}</h2>", unsafe_allow_html=True)
             st.markdown(f"<p style='color: black;'><strong>🎮 Username:</strong> @{st.session_state.user_data['username']}</p>", unsafe_allow_html=True)
-            st.markdown(f"<p style='color: black;'><strong>📧 Email:</strong> {st.session_state.user_data['email']}</p>", unsafe_allow_html=True)
-            st.markdown(f"<p style='color: black;'><strong>📅 Member Since:</strong> {st.session_state.user_data['join_date']}</p>", unsafe_allow_html=True)
+            st.markdown(f"<p style='color: b;'><strong>📅 Last Login:</strong> {st.session_state.user_data['join_date']}</p>", unsafe_allow_html=True)
         
         st.markdown('</div>', unsafe_allow_html=True)
         
@@ -1976,25 +1288,6 @@ else:
         else:
             st.info("🌟 Your wishlist is empty. Browse games and add them to your wishlist!")
         
-        # Account Settings
-        st.markdown("---")
-        st.subheader("⚙️ Account Settings")
-        
-        with st.expander("📝 Update Profile Information"):
-            col_set1, col_set2 = st.columns(2)
-            
-            with col_set1:
-                new_full_name = st.text_input("Full Name", value=st.session_state.user_data['full_name'])
-            
-            with col_set2:
-                new_email = st.text_input("Email", value=st.session_state.user_data['email'])
-            
-            if st.button("💾 Save Changes", key="save_profile"):
-                st.session_state.user_data['full_name'] = new_full_name
-                st.session_state.user_data['email'] = new_email
-                st.success("✅ Profile updated successfully!")
-                time.sleep(1)
-                st.rerun()
         
         with st.expander("🎮 Update Gaming Preferences"):
             st.write("Select your favorite game genres:")
@@ -2047,7 +1340,155 @@ else:
                 time.sleep(1)
                 st.rerun()
 
-# ==================== GAME DETAILS VIEW ====================
+    with tab4:
+        # ==================== AI ASSISTANT TAB ====================
+        st.header("🤖 AI Game Assistant")
+        
+        if not DEEPSEEK_ENABLED:
+            st.warning("""
+            ⚠️ **DeepSeek AI tidak diaktifkan.**
+            
+            Untuk menggunakan fitur AI Assistant, Anda perlu:
+            1. Dapatkan API key dari [DeepSeek Platform](https://platform.deepseek.com/api_keys)
+            2. Ganti API key di bagian atas kode
+            3. Restart aplikasi
+            
+            Fitur yang tersedia dengan AI:
+            • Deskripsi game yang menarik
+            • Rekomendasi personalisasi
+            • Analisis game
+            """)
+        else:
+            st.success("✅ DeepSeek AI Assistant aktif dan siap membantu!")
+            
+            # Info API Key
+            with st.expander("🔑 API Key Info"):
+                st.code(f"API Key: {DEEPSEEK_API_KEY[:15]}...")
+                st.caption("Status: Active" if DEEPSEEK_ENABLED else "Status: Inactive")
+            
+            # Pilih game untuk analisis AI
+            st.subheader("🎯 Pilih Game untuk Analisis AI")
+            
+            game_names = [game['name'] for game in GAMES_DATA]
+            selected_game_name = st.selectbox(
+                "Pilih game yang ingin dianalisis:",
+                options=game_names,
+                index=0
+            )
+            
+            # Temukan game yang dipilih
+            selected_game_for_ai = None
+            for game in GAMES_DATA:
+                if game['name'] == selected_game_name:
+                    selected_game_for_ai = game
+                    break
+            
+            if selected_game_for_ai:
+                col_ai1, col_ai2 = st.columns([1, 2])
+                
+                with col_ai1:
+                    st.image(selected_game_for_ai['image'], width=200)
+                    st.write(f"**{selected_game_for_ai['name']}**")
+                    st.write(f"Genre: {selected_game_for_ai['genre']}")
+                    st.write(f"Rating: ⭐ {selected_game_for_ai['rating']}/5.0")
+                    st.write(f"Harga: ${selected_game_for_ai['price']:.2f}")
+                    if selected_game_for_ai.get('discount', '0%') != '0%':
+                        st.success(f"Diskon: {selected_game_for_ai['discount']}")
+                
+                with col_ai2:
+                    # Tombol untuk generate deskripsi AI
+                    if st.button("🤖 Generate AI Description", key="generate_ai_desc", use_container_width=True):
+                        with st.spinner("🤖 AI sedang membuat deskripsi yang menarik..."):
+                            ai_description = generate_game_description_with_ai(selected_game_for_ai)
+                            
+                            if ai_description:
+                                st.session_state.ai_descriptions[selected_game_for_ai['appid']] = ai_description
+                                st.success("✅ Deskripsi berhasil dibuat!")
+                                st.rerun()
+                            else:
+                                st.error("❌ Gagal membuat deskripsi")
+                    
+                    # Tampilkan deskripsi AI jika ada
+                    if selected_game_for_ai['appid'] in st.session_state.ai_descriptions:
+                        st.markdown("---")
+                        st.subheader("📝 AI-Generated Description")
+                        st.markdown(f'<div class="ai-bubble">{st.session_state.ai_descriptions[selected_game_for_ai["appid"]]}</div>', unsafe_allow_html=True)
+                        
+                        # Tombol untuk clear cache AI
+                        col_clear1, col_clear2 = st.columns(2)
+                        with col_clear1:
+                            if st.button("🔄 Regenerate", key="regen_ai_desc"):
+                                del st.session_state.ai_descriptions[selected_game_for_ai['appid']]
+                                st.rerun()
+                        with col_clear2:
+                            if st.button("🗑️ Clear", key="clear_ai_desc"):
+                                del st.session_state.ai_descriptions[selected_game_for_ai['appid']]
+                                st.success("Deskripsi dihapus!")
+                                time.sleep(1)
+                                st.rerun()
+                    
+                    # AI Insights
+                    st.markdown("---")
+                    st.subheader("💡 AI Insights")
+                    
+                    # Value for Money Analysis
+                    with st.expander("💰 Analisis Value for Money"):
+                        price = selected_game_for_ai['price']
+                        rating = selected_game_for_ai['rating']
+                        
+                        if price == 0:
+                            st.success("**🆓 FREE TO PLAY**")
+                            st.write("Game ini gratis! Nilai terbaik untuk uang Anda.")
+                        elif price < 10:
+                            if rating > 4.0:
+                                st.success("**💎 Excellent Value**")
+                                st.write(f"Hanya ${price:.2f} untuk game dengan rating {rating}/5.0. Deal yang sangat bagus!")
+                            elif rating > 3.0:
+                                st.info("**👍 Good Value**")
+                                st.write(f"${price:.2f} adalah harga yang wajar untuk kualitas game ini.")
+                            else:
+                                st.warning("**⚠️ Consider Carefully**")
+                                st.write(f"Rating {rating}/5.0 untuk harga ${price:.2f}. Cek review dulu sebelum membeli.")
+                        else:
+                            if rating > 4.5:
+                                st.success("**🏆 Premium Quality**")
+                                st.write(f"Game premium dengan rating {rating}/5.0. Investasi yang bagus untuk pengalaman gaming terbaik.")
+                            elif rating > 4.0:
+                                st.info("**💵 Fair Price**")
+                                st.write(f"Harga ${price:.2f} sesuai dengan kualitas game berrating {rating}/5.0.")
+                            else:
+                                st.warning("**📉 Might Wait for Sale**")
+                                st.write(f"Rating {rating}/5.0 untuk harga ${price:.2f}. Mungkin lebih baik tunggu diskon lebih besar.")
+                    
+                    # Genre Analysis
+                    with st.expander("🎮 Analisis Genre"):
+                        genre = selected_game_for_ai['genre']
+                        genre_games = [g for g in GAMES_DATA if g['genre'] == genre]
+                        avg_genre_price = sum(g['price'] for g in genre_games) / len(genre_games) if genre_games else 0
+                        avg_genre_rating = sum(g['rating'] for g in genre_games) / len(genre_games) if genre_games else 0
+                        
+                        st.write(f"**Genre:** {genre}")
+                        st.write(f"**Game dalam genre ini:** {len(genre_games)}")
+                        st.write(f"**Harga rata-rata genre:** ${avg_genre_price:.2f}")
+                        st.write(f"**Rating rata-rata genre:** {avg_genre_rating:.1f}/5.0")
+                        
+                        # Perbandingan dengan rata-rata genre
+                        if selected_game_for_ai['price'] < avg_genre_price * 0.8:
+                            st.success("**💸 Below Genre Average** - Harga lebih murah dari rata-rata genre!")
+                        elif selected_game_for_ai['rating'] > avg_genre_rating + 0.5:
+                            st.success("**⭐ Above Genre Average** - Rating lebih tinggi dari rata-rata genre!")
+                    
+                    # AI Recommendations jika ada
+                    if st.session_state.ai_recommendations:
+                        st.markdown("---")
+                        st.subheader("🎯 AI Personal Recommendations")
+                        st.markdown(f'<div class="ai-insight">{st.session_state.ai_recommendations}</div>', unsafe_allow_html=True)
+                        
+                        if st.button("🔄 Refresh Recommendations", key="refresh_ai_rec"):
+                            st.session_state.ai_recommendations = ""
+                            st.rerun()
+
+# ==================== GAME DETAILS VIEW (DENGAN AI) ====================
 if "selected_game" in st.session_state and st.session_state.selected_game:
     st.markdown("---")
     
@@ -2074,6 +1515,7 @@ if "selected_game" in st.session_state and st.session_state.selected_game:
         # Main columns
         col1, col2 = st.columns([1, 2])
         
+        # Di dalam kolom 1 (col1) di game details view
         with col1:
             st.markdown('<div style="position: relative;">', unsafe_allow_html=True)
             st.markdown('<div class="game-image">', unsafe_allow_html=True)
@@ -2107,21 +1549,26 @@ if "selected_game" in st.session_state and st.session_state.selected_game:
                 else:
                     st.write(f"**Price:** **${price:.2f}**")
             
+            # AI Description Button
+            if DEEPSEEK_ENABLED:
+                st.markdown("---")
+                if st.button("🤖 Generate AI Description", key="ai_desc_game_detail", use_container_width=True):
+                    with st.spinner("🤖 AI sedang menganalisis game..."):
+                        ai_description = generate_game_description_with_ai(game)
+                        if ai_description:
+                            st.session_state.ai_descriptions[game['appid']] = ai_description
+                            st.rerun()
+            
             # Actions
-            col_act1, col_act2 = st.columns(2)
-            with col_act1:
-                if st.button("🛒 Add to Cart", key="add_cart_detail", use_container_width=True):
-                    st.success(f"Added {game['name']} to cart!")
-            with col_act2:
-                wishlisted = is_in_wishlist(game['appid'])
-                if wishlisted:
-                    if st.button("❤️ Remove", key="remove_wish_detail", use_container_width=True):
-                        remove_from_wishlist(game['appid'])
-                        st.rerun()
-                else:
-                    if st.button("🤍 Wishlist", key="add_wish_detail", use_container_width=True):
-                        add_to_wishlist(game['appid'], game['name'], game['image'], game['price'])
-                        st.rerun()
+            wishlisted = is_in_wishlist(game['appid'])
+            if wishlisted:
+                if st.button("❤️ Remove from Wishlist", key="remove_wish_detail", use_container_width=True):
+                    remove_from_wishlist(game['appid'])
+                    st.rerun()
+            else:
+                if st.button("🤍 Add to Wishlist", key="add_wish_detail", use_container_width=True):
+                    add_to_wishlist(game['appid'], game['name'], game['image'], game['price'])
+                    st.rerun()
             
             # External link ke CheapShark
             if game.get('deal_link'):
@@ -2148,6 +1595,19 @@ if "selected_game" in st.session_state and st.session_state.selected_game:
                     st.write(f"**Steam Reviews:** {game['steam_rating_text']}")
                 if game.get('is_deal', False):
                     st.success("✅ Live Deal Available")
+            
+            # AI Description Section
+            if DEEPSEEK_ENABLED and game['appid'] in st.session_state.ai_descriptions:
+                st.markdown("---")
+                st.subheader("🤖 AI-Powered Description")
+                st.markdown(f'<div class="ai-bubble">{st.session_state.ai_descriptions[game["appid"]]}</div>', unsafe_allow_html=True)
+                
+                if st.button("🔄 Regenerate AI Description", key="regen_ai_desc"):
+                    with st.spinner("🤖 AI sedang membuat deskripsi baru..."):
+                        ai_description = generate_game_description_with_ai(game)
+                        if ai_description:
+                            st.session_state.ai_descriptions[game['appid']] = ai_description
+                            st.rerun()
         
         # Game Statistics Charts
         st.markdown("---")
@@ -2332,9 +1792,9 @@ if "selected_game" in st.session_state and st.session_state.selected_game:
         
         st.plotly_chart(fig_combined, use_container_width=True)
         
-        # Analytics insights
+        # AI-Powered Analytics insights
         st.markdown("---")
-        st.subheader("📈 Analytics Insights")
+        st.subheader("🤖 AI-Powered Analytics Insights")
         
         col_insight1, col_insight2, col_insight3 = st.columns(3)
         
@@ -2345,11 +1805,11 @@ if "selected_game" in st.session_state and st.session_state.selected_game:
             
             st.info(f"**Player Volatility:** {volatility:.1f}%")
             if volatility > 50:
-                st.caption("🔺 High player fluctuation - possibly event-driven")
+                st.caption("🔺 **AI Insight:** Tinggi - Kemungkinan ada event atau update besar baru-baru ini")
             elif volatility > 20:
-                st.caption("📊 Moderate player activity")
+                st.caption("📊 **AI Insight:** Sedang - Komunitas aktif dengan fluktuasi normal")
             else:
-                st.caption("📈 Stable player base")
+                st.caption("📈 **AI Insight:** Stabil - Basis pemain yang solid dan konsisten")
         
         with col_insight2:
             avg_rating = sum(game_stats['ratings']) / len(game_stats['ratings'])
@@ -2357,11 +1817,11 @@ if "selected_game" in st.session_state and st.session_state.selected_game:
             
             st.info(f"**Rating Stability:** {rating_std:.3f} std dev")
             if rating_std > 0.3:
-                st.caption("⚠️ Rating fluctuates significantly")
+                st.caption("⚠️ **AI Insight:** Fluktuasi signifikan - Mungkin ada kontroversi atau update kontroversial")
             elif rating_std > 0.1:
-                st.caption("📊 Moderate rating changes")
+                st.caption("📊 **AI Insight:** Perubahan moderat - Review yang beragam tapi stabil")
             else:
-                st.caption("⭐ Very stable rating")
+                st.caption("⭐ **AI Insight:** Sangat stabil - Kualitas game yang konsisten diakui pemain")
         
         with col_insight3:
             if game['price'] > 0:
@@ -2371,38 +1831,52 @@ if "selected_game" in st.session_state and st.session_state.selected_game:
                     price_range = ((max_price - min_price) / min_price) * 100
                     st.info(f"**Price Range:** {price_range:.1f}%")
                     if price_range > 30:
-                        st.caption("💸 Significant price changes")
+                        st.caption("💸 **AI Insight:** Perubahan harga signifikan - Sering diskon besar")
                     elif price_range > 10:
-                        st.caption("💰 Moderate price fluctuations")
+                        st.caption("💰 **AI Insight:** Fluktuasi harga moderat - Harga berubah sesuai musim")
                     else:
-                        st.caption("💵 Stable pricing")
+                        st.caption("💵 **AI Insight:** Harga stabil - Jarang diskon, harga tetap")
                 else:
                     st.info("**Price:** Free")
             else:
                 st.success("**Price:** 🆓 Free to Play")
         
-        # Description
+        # Description dengan AI
         st.markdown("---")
         st.subheader("📖 About This Game")
-        st.write(f"""
-        **{game['name']}** is currently available as a live deal from **{game.get('store', 'the store')}**.
         
-        **💸 Deal Details:**
-        • **Current Price:** {'FREE' if game['price'] == 0 else f'${game["price"]:.2f}'}
-        • **Normal Price:** {'Free' if game.get('normal_price', 0) == 0 else f'${game.get("normal_price", 0):.2f}'}
-        • **Discount:** {game.get('discount', '0%')}
-        • **Store:** {game.get('store', 'Unknown')}
+        # Tampilkan deskripsi AI jika ada, jika tidak tampilkan deskripsi default
+        if game['appid'] in st.session_state.ai_descriptions:
+            st.markdown(f'<div class="ai-bubble">{st.session_state.ai_descriptions[game["appid"]]}</div>', unsafe_allow_html=True)
+        else:
+            st.write(f"""
+            **{game['name']}** is currently available as a live deal from **{game.get('store', 'the store')}**.
+            
+            **💸 Deal Details:**
+            • **Current Price:** {'FREE' if game['price'] == 0 else f'${game["price"]:.2f}'}
+            • **Normal Price:** {'Free' if game.get('normal_price', 0) == 0 else f'${game.get("normal_price", 0):.2f}'}
+            • **Discount:** {game.get('discount', '0%')}
+            • **Store:** {game.get('store', 'Unknown')}
+            
+            **🎮 Game Information:**
+            • **Genre:** {game['genre']}
+            • **Release Year:** {game.get('year', 'N/A')}
+            • **Community Rating:** ⭐ {game['rating']}/5.0
+            • **Player Count:** {game.get('players', 'N/A')}
+            
+            **📊 Deal Quality:**
+            This deal has a rating of {game.get('deal_rating', 'N/A')} on CheapShark based on price history and savings.
+            The game has {game.get('steam_rating_text', 'mixed reviews')} on Steam with {game.get('steam_rating_count', '0')} reviews.
+            """)
         
-        **🎮 Game Information:**
-        • **Genre:** {game['genre']}
-        • **Release Year:** {game.get('year', 'N/A')}
-        • **Community Rating:** ⭐ {game['rating']}/5.0
-        • **Player Count:** {game.get('players', 'N/A')}
-        
-        **📊 Deal Quality:**
-        This deal has a rating of {game.get('deal_rating', 'N/A')} on CheapShark based on price history and savings.
-        The game has {game.get('steam_rating_text', 'mixed reviews')} on Steam with {game.get('steam_rating_count', '0')} reviews.
-        """)
+        # Tombol untuk generate AI description jika belum ada
+        if DEEPSEEK_ENABLED and game['appid'] not in st.session_state.ai_descriptions:
+            if st.button("🤖 Generate AI-Powered Description", key="final_ai_desc"):
+                with st.spinner("🤖 AI sedang membuat deskripsi yang menarik..."):
+                    ai_description = generate_game_description_with_ai(game)
+                    if ai_description:
+                        st.session_state.ai_descriptions[game['appid']] = ai_description
+                        st.rerun()
     
     # Back button
     st.markdown("---")
@@ -2411,4 +1885,4 @@ if "selected_game" in st.session_state and st.session_state.selected_game:
         st.rerun()
 
 st.markdown("---")
-st.caption(f"© 2024 PlayHub Game Deals | Powered by CheapShark API | {len(GAMES_DATA)} live deals loaded | Data updates hourly")
+st.caption(f"© 2024 PlayHub Game Deals | Powered by CheapShark API | {len(GAMES_DATA)} live deals loaded | Data updates hourly | {'🤖 AI Assistant: Active' if DEEPSEEK_ENABLED else '🤖 AI Assistant: Inactive'}")
