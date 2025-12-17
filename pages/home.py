@@ -18,7 +18,7 @@ sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 from utils.user_manager import UserManager
 
-DEEPSEEK_API_KEY = "sk-26a8e20040dc42d6870cab221aea63a8"  
+DEEPSEEK_API_KEY = st.secrets["APIKEY"] 
 
 try:
     if DEEPSEEK_API_KEY and DEEPSEEK_API_KEY != "sk-26a8e20040dc42d6870cab221aea63a8":
